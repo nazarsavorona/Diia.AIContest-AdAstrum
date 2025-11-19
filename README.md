@@ -293,6 +293,28 @@ print(response.json())
 "
 ```
 
+### Exporting Landmarks from Local Fixtures
+
+Use the `export_landmarks.py` helper to run the validation pipeline on local images (or entire fixture folders) and store the detected landmarks as `.txt` files:
+
+```bash
+# Single image
+python3 export_landmarks.py -i path/to/photo.jpg --mode stream
+
+# Whole fixture directory, keeping the folder structure in landmark_exports/
+python3 export_landmarks.py -f fixtures/FLUXSynID-over-exposed --include-3d -o landmark_exports
+```
+
+Key options:
+- `--mode` selects `full` (all checks) or `stream` (fast, default) pipeline.
+- `--include-3d` adds the 3D mesh coordinates when available.
+- `--output-dir` chooses where the `.txt` exports are written (default `landmark_exports/`).
+- Pass `-i` multiple times for individual photos or `-f` for directories (recursively scanned).
+- Annotated preview images with the detected points are produced automatically (file name suffix `_landmarks`). Skip them with `--skip-overlay` if you only need the `.txt`.
+- Use `--connections mesh|contours|none` to control whether the preview also connects landmarks with full tessellation lines, contour-only outlines (default), or only dots.
+
+Each export file lists the validation status, any errors, and all landmark coordinates, and the companion annotated image makes it easy to visually confirm the detection without going through the API.
+
 ### Common Issues
 
 **Base64 Padding Error**: The API automatically fixes base64 padding issues. If you're sending from iOS/JavaScript, you can send the base64 string with or without padding - the server will handle it.

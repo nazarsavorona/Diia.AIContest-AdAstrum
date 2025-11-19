@@ -95,4 +95,9 @@ After successful installation:
 1. Test the API: Visit `http://localhost:8000/docs`
 2. Try the health endpoint: `curl http://localhost:8000/api/v1/health`
 3. Test with a sample image (see README.md)
-4. Adjust configuration thresholds in `config.py` as needed
+4. Export landmarks from fixture images if needed:
+   ```bash
+   python3 export_landmarks.py -f fixtures/FLUXSynID --mode stream
+   ```
+   (Generates `.txt` files and annotated `_landmarks` images; add `--skip-overlay` to disable previews or `--connections mesh` for full tessellation lines.)
+5. Adjust configuration thresholds in `config.py` as needed
