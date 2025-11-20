@@ -66,8 +66,36 @@ def send_validation_request(base64_image, endpoint_suffix, mode=None):
     except Exception as e:
         print(f"\n✗ Connection Error: {e}")
 
+def test_health_check():
+    url = f"{BASE_URL}/health"
+    print(f"\nTesting endpoint: {url}")
+    print("-" * 30)
+    
+    print("Sending request...")
+    try:
+        response = requests.get(url, timeout=10)
+        print(f"Response Status: {response.status_code}")
+        
+        if response.status_code == 200:
+            result = response.json()
+            print("\nAPI Response:")
+            print(json.dumps(result, indent=2))
+            
+            version = result.get('version')
+            if version == "1.0.1":
+                print(f"\n✓ Health Check Successful (Version: {version})")
+            else:
+                print(f"\n? Health Check Warning: Expected version 1.0.1, got {version}")
+        else:
+            print(f"\n✗ Health Check Failed: {response.text}")
+    except Exception as e:
+        print(f"\n✗ Connection Error: {e}")
+
 def test_api():
     print(f"Testing API Base URL: {BASE_URL}")
+    
+    # 0. Test Health Check
+    test_health_check()
     
     # 1. Create test image
     print("Generating test image...")
