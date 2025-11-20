@@ -7,20 +7,22 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 import uvicorn
 import logging
+from app.core import settings
 
 from app.api.routes import router
 from app import __version__
 
 # Set up logging
+resolved_log_level = getattr(logging, settings.LOG_LEVEL.upper(), logging.INFO)
 logging.basicConfig(
-    level=logging.INFO,
+    level=resolved_log_level,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
 )
 logger = logging.getLogger(__name__)
 
 # Create FastAPI app
 app = FastAPI(
-    title="Photo Validation API",
+    title=settings.APP_NAME,
     description="API for validating ID/passport photos for Diia app",
     version=__version__,
     docs_url="/docs",

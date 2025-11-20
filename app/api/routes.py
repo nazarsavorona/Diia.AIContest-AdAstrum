@@ -14,6 +14,7 @@ from app.api.models import (
     ValidationMode
 )
 from app.core.pipeline import ValidationPipeline
+from app.core import settings
 from app import __version__
 import config
 
@@ -67,6 +68,23 @@ async def health_check():
         version=__version__,
         models_loaded=models_loaded
     )
+
+
+@router.get("/aws/identity")
+async def aws_identity():
+    """Return AWS STS caller identity using the task role (if configured)."""
+    try:
+        import boto3
+        sts = boto3.client("sts", region_name=settings.AWS_REGION or "eu-central-1")
+        ident = sts.get_caller_identity()
+        return {
+            "account": ident.get("Account"),
+            "arn": ident.get("Arn"),
+            "user_id": ident.get("UserId")
+        }
+    except Exception as e:
+        logger.error(f"AWS identity retrieval failed: {e}")
+        return JSONResponse(status_code=500, content={"error": "identity_unavailable", "message": str(e)})
 
 
 @router.post("/validate/photo", response_model=ValidationResponse)

@@ -48,6 +48,9 @@ Thumbs.db
 # Logs
 *.log
 
+# Keys
+*.pem
+
 # Model files
 models/*.pth
 models/*.onnx
