@@ -1,0 +1,39 @@
+============================================================
+TEST SUMMARY
+============================================================
+
+Overall Statistics:
+  Total Images Tested: 9
+  Successful Requests: 8
+  Failed Requests: 0
+  Total Elapsed Time: 0.00 seconds
+
+Performance Metrics:
+  Total Processing Time: 10.59 seconds
+  Average FPS: 0.76 images/second
+  Average Request Time: 1.324 seconds
+  Min Request Time: 1.056 seconds
+  Max Request Time: 2.405 seconds
+  Throughput: 8.00 images/second (including delays)
+
+Validation Status Distribution:
+  fail: 8 (100.0%)
+
+Results by Image Type:
+  document:
+    Total: 2
+    Passed: 0 (0.0%)
+    Failed: 2
+  live_angled:
+    Total: 2
+    Passed: 0 (0.0%)
+    Failed: 2
+  live_eye_level:
+    Total: 2
+    Passed: 0 (0.0%)
+    Failed: 2
+  live_profile:
+    Total: 2
+    Passed: 0 (0.0%)
+    Failed: 2
+

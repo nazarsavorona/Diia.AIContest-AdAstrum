@@ -1,0 +1,6 @@
+# Image: /home/yaroslav/Projects/Diia.AIContest-AdAstrum/fixtures/FLUXSynID-processed/007efd1f0dcd/007efd1f0dcd_m_live_0_a_d1.jpg
+# Mode: stream
+# Status: fail
+# Errors: image_blurry_or_out_of_focus: Image is blurry (sharpness score: 13.51); no_face_detected: No face detected in the image
+
+# No 2D landmarks detected.

@@ -1,0 +1,6 @@
+person_id,image_file,image_type,status,issues,error,status_code
+00000bb0d1b9,00000bb0d1b9_f_doc.jpg,document,fail,,,
+00000bb0d1b9,00000bb0d1b9_f_live_0_a_d1.jpg,live_angled,fail,,,
+00000bb0d1b9,00000bb0d1b9_f_live_0_e_d1.jpg,live_eye_level,fail,,,
+00000bb0d1b9,00000bb0d1b9_f_live_0_p_d1.jpg,live_profile,fail,,,
+00028290bd21,00028290bd21_f_doc.jpg,document,fail,,,

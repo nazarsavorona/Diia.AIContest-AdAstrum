@@ -1,0 +1,35 @@
+============================================================
+TEST SUMMARY
+============================================================
+
+Overall Statistics:
+  Total Images Tested: 39
+  Successful Requests: 38
+  Failed Requests: 0
+  Elapsed Time: 0.00 seconds
+
+Validation Status Distribution:
+  fail: 38 (100.0%)
+
+Results by Image Type:
+  document:
+    Total: 7
+    Passed: 0 (0.0%)
+    Failed: 7
+  live_angled:
+    Total: 7
+    Passed: 0 (0.0%)
+    Failed: 7
+  live_eye_level:
+    Total: 6
+    Passed: 0 (0.0%)
+    Failed: 6
+  live_profile:
+    Total: 6
+    Passed: 0 (0.0%)
+    Failed: 6
+  unknown:
+    Total: 12
+    Passed: 0 (0.0%)
+    Failed: 12
+
