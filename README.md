@@ -39,6 +39,19 @@ The API will be available at `http://localhost:8000`
 - Swagger UI: `http://localhost:8000/docs`
 - ReDoc: `http://localhost:8000/redoc`
 
+## 🚀 Deployment
+
+### AWS Deployment (GPU)
+
+This project is configured for deployment on AWS ECS with GPU support (`g4dn.xlarge` instances).
+
+- **Infrastructure**: Managed via CloudFormation (`aws/cloudformation-template.yaml`).
+- **CI/CD**: Automated via GitHub Actions (`.github/workflows/deploy.yml`).
+
+For detailed setup instructions, see:
+- [AWS Deployment Guide](aws/README.md)
+- [CI/CD Setup Guide](CI_CD.md)
+
 ### Docker Deployment
 
 1. **Build the Docker image**:
