@@ -4,23 +4,11 @@ This repository includes a GitHub Actions workflow (`.github/workflows/deploy.ym
 
 ## Prerequisites
 
-Before the CI/CD pipeline can run successfully, you need to configure the following **Secrets** in your GitHub repository settings.
+The CI/CD pipeline uses **OpenID Connect (OIDC)** for secure authentication with AWS. This means you **do not** need to manage long-lived AWS Access Keys in GitHub Secrets.
 
-### 1. Go to Repository Settings
-1. Navigate to your repository on GitHub.
-2. Click on **Settings** > **Secrets and variables** > **Actions**.
-3. Click **New repository secret**.
+The necessary OIDC Provider and IAM Role have been provisioned via the `aws/github-oidc.yaml` CloudFormation stack.
 
-### 2. Add Required Secrets
-
-Add the following secrets:
-
-| Secret Name | Description | Example Value |
-|-------------|-------------|---------------|
-| `AWS_ACCESS_KEY_ID` | Your AWS Access Key ID | `AKIAIOSFODNN7EXAMPLE` |
-| `AWS_SECRET_ACCESS_KEY` | Your AWS Secret Access Key | `wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY` |
-
-### 3. Configuration (Optional)
+### Configuration (Optional)
 
 The workflow uses the following default environment variables defined in `.github/workflows/deploy.yml`. You can modify them in the file if needed:
 
