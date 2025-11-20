@@ -36,10 +36,15 @@ Parameters:
     Type: String
     Default: ''
     Description: Optional Secrets Manager secret ARN for JWT or other config
+  CertificateArn:
+    Type: String
+    Default: ''
+    Description: Optional ARN of an ACM Certificate for HTTPS (requires a custom domain)
 
 Conditions:
   HasS3Bucket: !Not [!Equals [!Ref S3BucketName, '']]
   HasSecret: !Not [!Equals [!Ref SecretsManagerSecretArn, '']]
+  HasCertificate: !Not [!Equals [!Ref CertificateArn, '']]
 
 
 Resources:
@@ -290,6 +295,19 @@ Resources:
       LoadBalancerArn: !Ref ALB
       Port: 80
       Protocol: HTTP
+
+  ALBListenerHTTPS:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Condition: HasCertificate
+    Properties:
+      DefaultActions:
+        - Type: forward
+          TargetGroupArn: !Ref TargetGroup
+      LoadBalancerArn: !Ref ALB
+      Port: 443
+      Protocol: HTTPS
+      Certificates:
+        - CertificateArn: !Ref CertificateArn
   
   # ==================== ECS Cluster ====================
   
@@ -434,6 +452,37 @@ Resources:
         MaximumPercent: 200
         MinimumHealthyPercent: 100
 
+  # ==================== CloudFront Distribution ====================
+
+  CloudFrontDistribution:
+    Type: AWS::CloudFront::Distribution
+    Properties:
+      DistributionConfig:
+        Enabled: true
+        Comment: !Sub "HTTPS Proxy for ${AWS::StackName}"
+        Origins:
+          - Id: ALBOrigin
+            DomainName: !GetAtt ALB.DNSName
+            CustomOriginConfig:
+              HTTPPort: 80
+              HTTPSPort: 443
+              OriginProtocolPolicy: http-only
+              OriginSSLProtocols: [TLSv1.2]
+        DefaultCacheBehavior:
+          TargetOriginId: ALBOrigin
+          ViewerProtocolPolicy: redirect-to-https
+          AllowedMethods: [HEAD, DELETE, POST, GET, OPTIONS, PUT, PATCH]
+          CachedMethods: [HEAD, GET]
+          ForwardedValues:
+            QueryString: true
+            Headers: ['*']
+            Cookies:
+              Forward: all
+          Compress: true
+          DefaultTTL: 0
+          MinTTL: 0
+          MaxTTL: 0
+
 Outputs:
   LoadBalancerDNS:
     Description: DNS name of the load balancer
@@ -457,6 +506,17 @@ Outputs:
     Description: API endpoint URL
     Value: !Sub http://${ALB.DNSName}/api/v1/health
   
+  APIEndpointHTTPS:
+    Condition: HasCertificate
+    Description: API endpoint URL (HTTPS)
+    Value: !Sub https://${ALB.DNSName}/api/v1/health
+
+  CloudFrontURL:
+    Description: CloudFront HTTPS URL
+    Value: !Sub https://${CloudFrontDistribution.DomainName}/api/v1/health
+    Export:
+      Name: !Sub ${AWS::StackName}-cloudfront-url
+
   ServiceName:
     Description: Name of the ECS service
     Value: !GetAtt ECSService.Name

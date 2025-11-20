@@ -37,6 +37,16 @@ aws cloudformation wait stack-create-complete \
 ./deploy.sh us-east-1 YOUR_ACCOUNT_ID
 ```
 
+### 🔒 HTTPS Support
+
+To enable HTTPS, you need an ACM Certificate ARN.
+
+```bash
+# Deploy with HTTPS
+export CERT_ARN="arn:aws:acm:region:account:certificate/id"
+./deploy.sh
+```
+
 **See `CLOUDFORMATION.md` for detailed instructions.**
 
 ### Option 2: Manual Setup (Step-by-step - 1 hour)

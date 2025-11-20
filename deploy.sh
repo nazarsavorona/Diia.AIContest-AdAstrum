@@ -48,6 +48,14 @@ export MSYS_NO_PATHCONV=1
 AMI_ID=$(aws ssm get-parameter --name /aws/service/ecs/optimized-ami/amazon-linux-2/gpu/recommended/image_id --region $REGION --query "Parameter.Value" --output text)
 echo "Using AMI: $AMI_ID"
 
+# Check for Certificate ARN
+CERT_ARN=${CERT_ARN:-""}
+if [ -n "$CERT_ARN" ]; then
+    echo "Enabling HTTPS with Certificate: $CERT_ARN"
+else
+    echo "No Certificate ARN provided. HTTPS will be disabled."
+fi
+
 # 4. CloudFormation Deploy
 echo "Deploying CloudFormation Stack..."
 aws cloudformation deploy \
@@ -58,6 +66,7 @@ aws cloudformation deploy \
     --parameter-overrides \
         KeyName=$KEY_NAME \
         ECSAMI=$AMI_ID \
+        CertificateArn=$CERT_ARN \
         InstanceType=g4dn.xlarge \
         DesiredCapacity=1 \
         MaxSize=3

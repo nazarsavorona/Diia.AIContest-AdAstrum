@@ -5,7 +5,7 @@ import io
 from PIL import Image, ImageDraw
 
 # Configuration
-BASE_URL = "http://AdAstrumStack-alb-65179996.eu-central-1.elb.amazonaws.com/api/v1"
+BASE_URL = "https://d28w3hxcjjqa9z.cloudfront.net/api/v1"
 
 def create_dummy_image():
     """Create a simple valid image for testing"""
