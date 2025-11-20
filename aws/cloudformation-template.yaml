@@ -290,11 +290,29 @@ Resources:
     Type: AWS::ElasticLoadBalancingV2::Listener
     Properties:
       DefaultActions:
-        - Type: forward
-          TargetGroupArn: !Ref TargetGroup
+        - Type: fixed-response
+          FixedResponseConfig:
+            ContentType: "text/plain"
+            MessageBody: "Access Denied: Please use the HTTPS CloudFront URL."
+            StatusCode: "403"
       LoadBalancerArn: !Ref ALB
       Port: 80
       Protocol: HTTP
+
+  ALBListenerRule:
+    Type: AWS::ElasticLoadBalancingV2::ListenerRule
+    Properties:
+      Actions:
+        - Type: forward
+          TargetGroupArn: !Ref TargetGroup
+      Conditions:
+        - Field: http-header
+          HttpHeaderConfig:
+            HttpHeaderName: X-AdAstrum-Auth
+            Values:
+              - secret-token-123
+      ListenerArn: !Ref ALBListener
+      Priority: 1
 
   ALBListenerHTTPS:
     Type: AWS::ElasticLoadBalancingV2::Listener
@@ -463,6 +481,9 @@ Resources:
         Origins:
           - Id: ALBOrigin
             DomainName: !GetAtt ALB.DNSName
+            OriginCustomHeaders:
+              - HeaderName: X-AdAstrum-Auth
+                HeaderValue: secret-token-123
             CustomOriginConfig:
               HTTPPort: 80
               HTTPSPort: 443
