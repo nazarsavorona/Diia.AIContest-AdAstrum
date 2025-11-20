@@ -360,6 +360,12 @@ Resources:
         KeyName: !Ref KeyName
         IamInstanceProfile:
           Arn: !GetAtt ECSInstanceProfile.Arn
+        BlockDeviceMappings:
+          - DeviceName: /dev/xvda
+            Ebs:
+              VolumeSize: 100
+              VolumeType: gp3
+              DeleteOnTermination: true
         SecurityGroupIds:
           - !Ref ECSSecurityGroup
         UserData:
