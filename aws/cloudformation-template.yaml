@@ -468,7 +468,7 @@ Resources:
       HealthCheckGracePeriodSeconds: 120
       DeploymentConfiguration:
         MaximumPercent: 200
-        MinimumHealthyPercent: 100
+        MinimumHealthyPercent: 0
 
   # ==================== CloudFront Distribution ====================
 
