@@ -76,4 +76,4 @@ jobs:
       - name: Force ECS Service Update
         run: |
           echo "Forcing ECS service update..."
-          aws ecs update-service --cluster ${{ env.STACK_NAME }}-cluster --service ${{ env.STACK_NAME }}-service --force-new-deployment
+          aws ecs update-service --cluster ${{ env.STACK_NAME }}-cluster --service ${{ env.STACK_NAME }}-service-v2 --force-new-deployment
