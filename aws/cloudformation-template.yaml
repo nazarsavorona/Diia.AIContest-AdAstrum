@@ -397,6 +397,7 @@ Resources:
       DesiredCapacity: !Ref DesiredCapacity
       HealthCheckType: ELB
       HealthCheckGracePeriod: 300
+      NewInstancesProtectedFromScaleIn: true
       Tags:
         - Key: Name
           Value: !Sub ${AWS::StackName}-asg-instance
@@ -421,8 +422,8 @@ Resources:
       NetworkMode: bridge
       RequiresCompatibilities:
         - EC2
-      Cpu: '2048'
-      Memory: '8192'
+      Cpu: '3072'
+      Memory: '14336'
       ExecutionRoleArn: !GetAtt ECSTaskExecutionRole.Arn
       TaskRoleArn: !GetAtt ECSTaskRole.Arn
       ContainerDefinitions:
@@ -456,17 +457,43 @@ Resources:
             Retries: 3
             StartPeriod: 60
   
+  # ==================== ECS Capacity Provider ====================
+
+  ECSCapacityProvider:
+    Type: AWS::ECS::CapacityProvider
+    Properties:
+      AutoScalingGroupProvider:
+        AutoScalingGroupArn: !Ref AutoScalingGroup
+        ManagedScaling:
+          Status: ENABLED
+          TargetCapacity: 100
+        ManagedTerminationProtection: ENABLED
+
+  ECSClusterCapacityProviderAssociations:
+    Type: AWS::ECS::ClusterCapacityProviderAssociations
+    Properties:
+      Cluster: !Ref ECSCluster
+      CapacityProviders:
+        - !Ref ECSCapacityProvider
+      DefaultCapacityProviderStrategy:
+        - CapacityProvider: !Ref ECSCapacityProvider
+          Weight: 1
+
   # ==================== ECS Service ====================
   
   ECSService:
     Type: AWS::ECS::Service
-    DependsOn: ALBListener
+    DependsOn: 
+      - ALBListener
+      - ECSClusterCapacityProviderAssociations
     Properties:
-      ServiceName: !Sub ${AWS::StackName}-service
+      ServiceName: !Sub ${AWS::StackName}-service-v2
       Cluster: !Ref ECSCluster
       TaskDefinition: !Ref TaskDefinition
       DesiredCount: 1
-      LaunchType: EC2
+      CapacityProviderStrategy:
+        - CapacityProvider: !Ref ECSCapacityProvider
+          Weight: 1
       LoadBalancers:
         - ContainerName: photo-validator
           ContainerPort: 8000
@@ -474,7 +501,7 @@ Resources:
       HealthCheckGracePeriodSeconds: 120
       DeploymentConfiguration:
         MaximumPercent: 200
-        MinimumHealthyPercent: 0
+        MinimumHealthyPercent: 100
 
   # ==================== CloudFront Distribution ====================
 
