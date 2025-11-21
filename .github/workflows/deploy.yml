@@ -101,7 +101,7 @@ jobs:
             --query 'taskDefinition' > task-def.json
           
           # Update image using Python
-          python3 << 'PYTHON_SCRIPT'
+          python3 -c "
 import json
 
 with open('task-def.json', 'r') as f:
@@ -117,8 +117,8 @@ for key in ['taskDefinitionArn', 'revision', 'status', 'requiresAttributes', 'co
 with open('task-def-new.json', 'w') as f:
     json.dump(task_def, f, indent=2)
 
-print(f"Updated image to: {task_def['containerDefinitions'][0]['image']}")
-PYTHON_SCRIPT
+print('Updated image to: ' + task_def['containerDefinitions'][0]['image'])
+"
           
           # Register new task definition
           NEW_TASK_ARN=$(aws ecs register-task-definition \
