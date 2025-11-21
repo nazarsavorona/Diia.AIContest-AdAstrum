@@ -82,10 +82,10 @@ def test_health_check():
             print(json.dumps(result, indent=2))
             
             version = result.get('version')
-            if version == "1.2.1":
+            if version == "1.2.2":
                 print(f"\n✓ Health Check Successful (Version: {version})")
             else:
-                print(f"\n? Health Check Warning: Expected version 1.2.1, got {version}")
+                print(f"\n? Health Check Warning: Expected version 1.2.2, got {version}")
         else:
             print(f"\n✗ Health Check Failed: {response.text}")
     except Exception as e:
