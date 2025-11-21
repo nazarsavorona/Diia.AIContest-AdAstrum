@@ -96,10 +96,10 @@ class QualityValidator(BaseValidator):
         
         # Check for overexposure
         high_pixel_ratio = np.sum(gray_image > config.BRIGHTNESS_HIGH_THRESHOLD) / gray_image.size
-        if high_pixel_ratio > 0.5 or mean_brightness > 200:
+        if high_pixel_ratio > config.OVEREXPOSED_PIXEL_RATIO or mean_brightness > config.BRIGHTNESS_HIGH_THRESHOLD:
             result.add_error(
                 ErrorCode.OVEREXPOSED,
-                f"Image is overexposed (brightness: {mean_brightness:.1f})"
+                f"Image is overexposed (brightness: {mean_brightness:.1f}, bright pixels: {high_pixel_ratio * 100:.1f}%)"
             )
         
         # Check contrast

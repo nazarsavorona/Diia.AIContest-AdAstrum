@@ -102,6 +102,7 @@ class PoseEstimationValidator(BaseValidator):
         
         # Convert rotation vector to euler angles
         yaw, pitch, roll = self._rotation_vector_to_euler_angles(rotation_vector)
+        yaw = self._normalize_yaw(yaw)
         
         # Check pose thresholds
         self._check_pose_angles(yaw, pitch, roll, result)
@@ -168,6 +169,17 @@ class PoseEstimationValidator(BaseValidator):
         yaw = np.degrees(yaw)
         
         return yaw, pitch, roll
+
+    def _normalize_yaw(self, yaw: float) -> float:
+        """
+        Face Mesh can flip left/right, producing ~180° yaw for frontal faces.
+        Fold mirrored solutions back toward zero so frontal faces are accepted.
+        """
+        if yaw > 90:
+            return 180 - yaw
+        if yaw < -90:
+            return -180 - yaw
+        return yaw
     
     def _check_pose_angles(self, yaw: float, pitch: float, roll: float, result: ValidationResult):
         """

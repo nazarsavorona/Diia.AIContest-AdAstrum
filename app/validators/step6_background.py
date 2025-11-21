@@ -64,11 +64,11 @@ class BackgroundValidator(BaseValidator):
             return result
         
         # Check for multiple people
-        person_count = self._count_persons(segmentation_mask)
-        if person_count > 1:
+        person_count, extra_person_ratio = self._count_persons(segmentation_mask)
+        if person_count > 1 and extra_person_ratio > config.EXTRA_PERSON_MIN_RATIO:
             result.add_error(
                 ErrorCode.EXTRANEOUS_PEOPLE,
-                f"Detected {person_count} people in the image"
+                f"Detected extra people occupying {extra_person_ratio * 100:.1f}% of the image"
             )
         
         # Check background uniformity
@@ -85,6 +85,7 @@ class BackgroundValidator(BaseValidator):
         result.metadata = {
             'segmentation_available': True,
             'person_count': int(person_count),
+            'extra_person_ratio': float(extra_person_ratio),
             'background_variance': float(background_variance),
             'extraneous_object_score': float(object_score)
         }
@@ -118,12 +119,12 @@ class BackgroundValidator(BaseValidator):
         except Exception as e:
             return None
     
-    def _count_persons(self, segmentation_mask: np.ndarray) -> int:
+    def _count_persons(self, segmentation_mask: np.ndarray) -> tuple:
         """
         Count number of distinct person regions in segmentation mask
         
         Returns:
-            Number of persons detected
+            Tuple of (person_count, extra_person_ratio)
         """
         # Create binary mask for person class
         person_mask = (segmentation_mask == self.PERSON_CLASS).astype(np.uint8)
@@ -133,15 +134,23 @@ class BackgroundValidator(BaseValidator):
         
         # Subtract 1 for background label
         # Also filter out very small regions (noise)
-        person_count = 0
-        min_area = 1000  # minimum pixels for a valid person region
+        min_area = config.MIN_PERSON_SEGMENT_AREA  # minimum pixels for a valid person region
+        areas = []
         
         for label in range(1, num_labels):
             area = np.sum(labels == label)
             if area > min_area:
-                person_count += 1
+                areas.append(area)
         
-        return person_count
+        if not areas:
+            return 0, 0.0
+        
+        areas.sort(reverse=True)
+        extra_area = sum(areas[1:]) if len(areas) > 1 else 0.0
+        total_pixels = segmentation_mask.size
+        extra_ratio = extra_area / total_pixels if total_pixels else 0.0
+        
+        return len(areas), extra_ratio
     
     def _check_background_uniformity(self, image: np.ndarray, segmentation_mask: np.ndarray, result: ValidationResult) -> float:
         """
@@ -230,7 +239,11 @@ class BackgroundValidator(BaseValidator):
     
     def __del__(self):
         """Clean up resources"""
-        if hasattr(self, 'model'):
-            del self.model
-        if torch.cuda.is_available():
-            torch.cuda.empty_cache()
+        try:
+            if hasattr(self, 'model'):
+                del self.model
+            if torch.cuda.is_available():
+                torch.cuda.empty_cache()
+        except Exception:
+            # Avoid noisy destructor errors during interpreter shutdown
+            pass

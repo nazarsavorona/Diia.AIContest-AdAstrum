@@ -169,7 +169,7 @@ class GeometryValidator(BaseValidator):
             
             # Threshold for hair occlusion
             # This is a simple heuristic - high edge density near jawline suggests hair
-            if occlusion_score > 0.15:  # 15% edge density threshold
+            if occlusion_score > config.HAIR_OCCLUSION_THRESHOLD:
                 result.add_error(
                     ErrorCode.HAIR_COVERS_FACE,
                     f"Possible hair occlusion detected (score: {occlusion_score:.3f})"
