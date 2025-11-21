@@ -92,51 +92,40 @@ jobs:
             --region ${{ env.AWS_REGION }}
 
       - name: Update ECS Service with new image
+        env:
+          IMAGE: ${{ steps.build-image.outputs.image }}
         run: |
-          echo "Creating new task definition with image: ${{ steps.build-image.outputs.image }}"
+          echo "Updating ECS service to use new image: $IMAGE"
           
-          # Get current task definition
-          aws ecs describe-task-definition \
+          # Get current task definition and extract the family
+          TASK_FAMILY=$(aws ecs describe-task-definition \
             --task-definition AdAstrumStack-task \
-            --query 'taskDefinition' > task-def.json
+            --query 'taskDefinition.family' \
+            --output text)
           
-          # Create Python script to update image
-          cat > update_task_def.py << 'EOF'
-import json
-import sys
-
-with open('task-def.json', 'r') as f:
-    task_def = json.load(f)
-
-# Update image
-task_def['containerDefinitions'][0]['image'] = sys.argv[1]
-
-# Remove AWS-managed fields
-for key in ['taskDefinitionArn', 'revision', 'status', 'requiresAttributes', 'compatibilities', 'registeredAt', 'registeredBy']:
-    task_def.pop(key, None)
-
-with open('task-def-new.json', 'w') as f:
-    json.dump(task_def, f, indent=2)
-
-print('Updated image to: ' + task_def['containerDefinitions'][0]['image'])
-EOF
+          # Get the latest task definition JSON
+          TASK_DEF=$(aws ecs describe-task-definition --task-definition AdAstrumStack-task)
           
-          # Run the Python script
-          python3 update_task_def.py "${{ steps.build-image.outputs.image }}"
+          # Use jq to update the image and clean up the JSON for registration
+          NEW_TASK_DEF=$(echo "$TASK_DEF" | jq --arg IMAGE "$IMAGE" '
+            .taskDefinition |
+            .containerDefinitions[0].image = $IMAGE |
+            del(.taskDefinitionArn, .revision, .status, .requiresAttributes, .compatibilities, .registeredAt, .registeredBy)
+          ')
           
-          # Register new task definition
-          NEW_TASK_ARN=$(aws ecs register-task-definition \
-            --cli-input-json file://task-def-new.json \
+          # Register the new task definition
+          NEW_TASK_ARN=$(echo "$NEW_TASK_DEF" | aws ecs register-task-definition \
+            --cli-input-json file:///dev/stdin \
             --query 'taskDefinition.taskDefinitionArn' \
             --output text)
           
           echo "New task definition registered: $NEW_TASK_ARN"
           
-          # Update service to use new task definition
+          # Update the service to use the new task definition
           aws ecs update-service \
             --cluster ${{ env.STACK_NAME }}-cluster \
             --service ${{ env.STACK_NAME }}-service-v2 \
-            --task-definition $NEW_TASK_ARN \
+            --task-definition "$NEW_TASK_ARN" \
             --region ${{ env.AWS_REGION }}
           
           echo "✓ Service updated with new task definition"
