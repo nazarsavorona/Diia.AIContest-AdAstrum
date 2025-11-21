@@ -143,7 +143,7 @@ def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--api", default="https://d28w3hxcjjqa9z.cloudfront.net/api/v1", help="Base API URL")
     parser.add_argument("--dataset", default="/Users/ihor.olkhovatyi/Downloads/FLUXSynID/FLUXSynID", type=Path)
-    parser.add_argument("--docs", type=int, default=50, help="Number of doc images to test")
+    parser.add_argument("--docs", type=int, default=10, help="Number of doc images to test")
     parser.add_argument("--negatives", type=int, default=3, help="Number of live/non-doc images to test")
     args = parser.parse_args()
 
