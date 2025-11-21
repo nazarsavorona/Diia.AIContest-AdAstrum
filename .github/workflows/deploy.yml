@@ -103,38 +103,34 @@ jobs:
           IMAGE: ${{ steps.build-image.outputs.image }}
         run: |
           echo "Updating ECS service to use new image: $IMAGE"
-          
-          # Get current task definition and extract the family
-          TASK_FAMILY=$(aws ecs describe-task-definition \
+
+          # Download current task definition JSON
+          aws ecs describe-task-definition \
             --task-definition AdAstrumStack-task \
-            --query 'taskDefinition.family' \
-            --output text)
-          
-          # Get the latest task definition JSON
-          TASK_DEF=$(aws ecs describe-task-definition --task-definition AdAstrumStack-task)
-          
-          # Use jq to update the image and clean up the JSON for registration
-          NEW_TASK_DEF=$(echo "$TASK_DEF" | jq --arg IMAGE "$IMAGE" '
-            .taskDefinition |
+            --query 'taskDefinition' \
+            > task-def.json
+
+          # Patch image and strip AWS-managed fields (jq output saved to file)
+          jq --arg IMAGE "$IMAGE" '
             .containerDefinitions[0].image = $IMAGE |
             del(.taskDefinitionArn, .revision, .status, .requiresAttributes, .compatibilities, .registeredAt, .registeredBy)
-          ')
-          
-          # Register the new task definition
-          NEW_TASK_ARN=$(echo "$NEW_TASK_DEF" | aws ecs register-task-definition \
-            --cli-input-json file:///dev/stdin \
+          ' task-def.json > task-def-updated.json
+
+          # Register new task definition from file
+          NEW_TASK_ARN=$(aws ecs register-task-definition \
+            --cli-input-json file://task-def-updated.json \
             --query 'taskDefinition.taskDefinitionArn' \
             --output text)
-          
+
           echo "New task definition registered: $NEW_TASK_ARN"
-          
+
           # Update the service to use the new task definition
           aws ecs update-service \
             --cluster ${{ env.STACK_NAME }}-cluster \
             --service ${{ env.STACK_NAME }}-service-v2 \
             --task-definition "$NEW_TASK_ARN" \
             --region ${{ env.AWS_REGION }}
-          
+
           echo "✓ Service updated with new task definition"
 
       - name: Wait for deployment to complete
