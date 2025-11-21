@@ -100,15 +100,16 @@ jobs:
             --task-definition AdAstrumStack-task \
             --query 'taskDefinition' > task-def.json
           
-          # Update image using Python
-          python3 -c "
+          # Create Python script to update image
+          cat > update_task_def.py << 'EOF'
 import json
+import sys
 
 with open('task-def.json', 'r') as f:
     task_def = json.load(f)
 
 # Update image
-task_def['containerDefinitions'][0]['image'] = '${{ steps.build-image.outputs.image }}'
+task_def['containerDefinitions'][0]['image'] = sys.argv[1]
 
 # Remove AWS-managed fields
 for key in ['taskDefinitionArn', 'revision', 'status', 'requiresAttributes', 'compatibilities', 'registeredAt', 'registeredBy']:
@@ -118,7 +119,10 @@ with open('task-def-new.json', 'w') as f:
     json.dump(task_def, f, indent=2)
 
 print('Updated image to: ' + task_def['containerDefinitions'][0]['image'])
-"
+EOF
+          
+          # Run the Python script
+          python3 update_task_def.py "${{ steps.build-image.outputs.image }}"
           
           # Register new task definition
           NEW_TASK_ARN=$(aws ecs register-task-definition \
