@@ -14,6 +14,8 @@
 	<string>$(IS_IN_DEBUG)</string>
 	<key>Scheme</key>
 	<string>$(SCHEME)</string>
+	<key>NSCameraUsageDescription</key>
+	<string>Camera access is needed to preview live video for landmark detection and QR scanning.</string>
 	<key>NSFaceIDUsageDescription</key>
 	<string>Enabling Face ID allows you quick and secure access to your account</string>
 	<key>UIApplicationSceneManifest</key>

@@ -205,6 +205,10 @@
 		7BD75AD92B678129000D54CA /* background_gradient.json in Resources */ = {isa = PBXBuildFile; fileRef = 7BD75AD82B678129000D54CA /* background_gradient.json */; };
 		7BD75ADB2B679FCB000D54CA /* splash_cropped.json in Resources */ = {isa = PBXBuildFile; fileRef = 7BD75ADA2B679FCB000D54CA /* splash_cropped.json */; };
 		3AE7FCE16CDC451B8C8B541B /* Landmarks in Resources */ = {isa = PBXBuildFile; fileRef = 02608E996C3544C8915B2800 /* Landmarks */; };
+		C08AFE0AAA6D40C88E355C58 /* CameraCaptureService.swift in Sources */ = {isa = PBXBuildFile; fileRef = C557B90ABF3E451A94D79E38 /* CameraCaptureService.swift */; };
+		5E6B4CF5AEE94AF1AF5A1234 /* LandmarksSources.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9A27C30BDB0E4B3F9360E722 /* LandmarksSources.swift */; };
+		1075FFE347F4426FB465A640 /* LiveCameraModule.swift in Sources */ = {isa = PBXBuildFile; fileRef = 83DF7BDDA2E54098A774DA5B /* LiveCameraModule.swift */; };
+		B0AB8B0E2A504FDEBA1ED136 /* LiveCameraViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB99F4E0FF254E91AD84CE91 /* LiveCameraViewController.swift */; };
 		7BE198B42B148389008C9FAC /* PublicServiceCoreNetworkContext+Extension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7BE198B32B148389008C9FAC /* PublicServiceCoreNetworkContext+Extension.swift */; };
 		7BE198EA2B14FBDF008C9FAC /* TemplateActionFactory.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7BE198E92B14FBDF008C9FAC /* TemplateActionFactory.swift */; };
 		7BE198F22B150D1F008C9FAC /* ContextMenuProvidingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7BE198F12B150D1F008C9FAC /* ContextMenuProvidingView.swift */; };
@@ -260,6 +264,10 @@
 		40EDF15F400D468ABAB8E83A /* LandmarksPreviewPresenter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LandmarksPreviewPresenter.swift; sourceTree = "<group>"; };
 		E8F7D7AB367E4A8FBF8C13E4 /* LandmarksPreviewViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LandmarksPreviewViewController.swift; sourceTree = "<group>"; };
 		F7B9E0E288974D6B8195C311 /* MediaPipeConnections.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MediaPipeConnections.swift; sourceTree = "<group>"; };
+		C557B90ABF3E451A94D79E38 /* CameraCaptureService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraCaptureService.swift; sourceTree = "<group>"; };
+		9A27C30BDB0E4B3F9360E722 /* LandmarksSources.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LandmarksSources.swift; sourceTree = "<group>"; };
+		83DF7BDDA2E54098A774DA5B /* LiveCameraModule.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LiveCameraModule.swift; sourceTree = "<group>"; };
+		BB99F4E0FF254E91AD84CE91 /* LiveCameraViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LiveCameraViewController.swift; sourceTree = "<group>"; };
 		42F49A0B2DCC94C800B8D36F /* ContextMenuConfigurable.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ContextMenuConfigurable.swift; sourceTree = "<group>"; };
 		42F49A0D2DCC959200B8D36F /* String+Ext.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "String+Ext.swift"; sourceTree = "<group>"; };
 		42F9229F29FBDC820072DDC1 /* DiiaOpenSource.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = DiiaOpenSource.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -555,8 +563,20 @@
 				40EDF15F400D468ABAB8E83A /* LandmarksPreviewPresenter.swift */,
 				E8F7D7AB367E4A8FBF8C13E4 /* LandmarksPreviewViewController.swift */,
 				F7B9E0E288974D6B8195C311 /* MediaPipeConnections.swift */,
+				001F7337783640FAB9F422DA /* Live */,
 			);
 			path = LandmarksPreview;
+			sourceTree = "<group>";
+		};
+		001F7337783640FAB9F422DA /* Live */ = {
+			isa = PBXGroup;
+			children = (
+				C557B90ABF3E451A94D79E38 /* CameraCaptureService.swift */,
+				9A27C30BDB0E4B3F9360E722 /* LandmarksSources.swift */,
+				83DF7BDDA2E54098A774DA5B /* LiveCameraModule.swift */,
+				BB99F4E0FF254E91AD84CE91 /* LiveCameraViewController.swift */,
+			);
+			path = Live;
 			sourceTree = "<group>";
 		};
 		42F9229629FBDC820072DDC1 = {
@@ -1664,6 +1684,10 @@
 				1D88C0D981C448EE9ADC3B1C /* LandmarksPreviewPresenter.swift in Sources */,
 				971FC91F53454F5E85D97069 /* LandmarksPreviewViewController.swift in Sources */,
 				826C4BDC94BC4288836015D1 /* MediaPipeConnections.swift in Sources */,
+				C08AFE0AAA6D40C88E355C58 /* CameraCaptureService.swift in Sources */,
+				5E6B4CF5AEE94AF1AF5A1234 /* LandmarksSources.swift in Sources */,
+				1075FFE347F4426FB465A640 /* LiveCameraModule.swift in Sources */,
+				B0AB8B0E2A504FDEBA1ED136 /* LiveCameraViewController.swift in Sources */,
 				7B7693C92B7AE63E0007A89F /* SharingDocsAPI.swift in Sources */,
 				7BE199412B16DB2D008C9FAC /* DocumentReorderingService.swift in Sources */,
 				3329AF7A2B2A1F1F004B8517 /* EnterPinCodeAuthDelegate.swift in Sources */,

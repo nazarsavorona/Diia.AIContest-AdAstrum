@@ -178,6 +178,23 @@ extension LandmarksPreviewViewController: LandmarksPreviewView {
         }
         present(alert, animated: true)
     }
+
+    func startLiveMode(sourceType: LandmarksPreviewMode) {
+        imageContainer.isHidden = false
+        errorLabel.isHidden = false
+        switch sourceType {
+        case .mediapipe:
+            errorLabel.text = "MediaPipe live mode requires linking the MediaPipeTasksVision framework per the official guide."
+        case .api:
+            errorLabel.text = "API live mode placeholder. Connect your API client to stream frames."
+        case .fixtures:
+            errorLabel.text = nil
+        }
+    }
+
+    func stopLiveMode() {
+        errorLabel.isHidden = true
+    }
 }
 
 final class LandmarksOverlayView: UIView {
