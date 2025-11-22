@@ -112,6 +112,15 @@ final class PublicServiceCategoriesListPresenter: NSObject, PublicServiceCategor
         }
         
         let item = items[index]
+        
+        if item.name == "Перевірка фото на документи" || (item.publicServices.count == 1 && item.publicServices.first?.title == "Перевірка фото на документи") {
+            model.publicServiceOpener.openPublicService(
+                type: PublicServiceType.photoVerification.rawValue,
+                contextMenu: [],
+                in: view)
+            return
+        }
+        
         if item.status != .active { return }
         
         if item.publicServices.count == 1, item.publicServices[0].isActive {
