@@ -14,13 +14,14 @@ MIN_JPEG_QUALITY = 85  # approximate quality level
 JPEG_BLOCKINESS_THRESHOLD = 15.0  # variance threshold for blocking artifacts
 
 # Lighting and quality thresholds
-BLUR_THRESHOLD = 100.0  # Laplacian variance threshold
+# Loosened for real camera streams (less aggressive blur/shadow rejects)
+BLUR_THRESHOLD = 35.0  # Laplacian variance threshold
 MIN_CONTRAST = 30.0  # minimum standard deviation of luminance
 MAX_CONTRAST = 80.0  # maximum standard deviation
 BRIGHTNESS_LOW_THRESHOLD = 50  # histogram analysis
 BRIGHTNESS_HIGH_THRESHOLD = 220
 OVEREXPOSED_PIXEL_RATIO = 0.7  # fraction of pixels allowed above high threshold
-SHADOW_DIFFERENCE_THRESHOLD = 60  # brightness difference for shadow detection
+SHADOW_DIFFERENCE_THRESHOLD = 80  # brightness difference for shadow detection
 
 # Face detection thresholds
 MIN_FACE_DETECTION_CONFIDENCE = 0.7
