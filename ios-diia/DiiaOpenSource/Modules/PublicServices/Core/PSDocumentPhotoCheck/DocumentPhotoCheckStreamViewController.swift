@@ -191,17 +191,23 @@ final class DocumentPhotoCheckStreamViewController: UIViewController, BaseView {
     }
     
     private func updateButtonState() {
-        if isFrameValid && !needsRetake && !isFinalValidating {
-            continueButton.isEnabled = true
-            continueButton.backgroundColor = .black
-            continueButton.setTitleColor(.white, for: .normal)
-            continueButton.setTitle("Продовжити", for: .normal)
-        } else if needsRetake {
+        switch (isFinalValidating, needsRetake, isFrameValid) {
+        case (true, _, _):
+            continueButton.isEnabled = false
+            continueButton.backgroundColor = UIColor.black.withAlphaComponent(0.2)
+            continueButton.setTitleColor(.white.withAlphaComponent(0.6), for: .disabled)
+            continueButton.setTitle("Перевіряємо...", for: .disabled)
+        case (false, true, _):
             continueButton.isEnabled = true
             continueButton.backgroundColor = .black
             continueButton.setTitleColor(.white, for: .normal)
             continueButton.setTitle("Завантажити нове фото", for: .normal)
-        } else {
+        case (false, false, true):
+            continueButton.isEnabled = true
+            continueButton.backgroundColor = .black
+            continueButton.setTitleColor(.white, for: .normal)
+            continueButton.setTitle("Продовжити", for: .normal)
+        default:
             continueButton.isEnabled = false
             continueButton.backgroundColor = UIColor.black.withAlphaComponent(0.2)
             continueButton.setTitleColor(UIColor.white.withAlphaComponent(0.6), for: .disabled)
@@ -232,11 +238,18 @@ final class DocumentPhotoCheckStreamViewController: UIViewController, BaseView {
             isFrameValid = false
             messageLabel.isHidden = true
             lastValidImage = nil
+            lastSampleBuffer = nil
+            overlayView.state = .idle
+            cameraService.start()
             updateButtonState()
             return
         }
         guard let payload = encodeForFinalValidation() else { return }
-        lastValidImage = payload.image
+        // freeze stream
+        cameraService.stop()
+        validationSource.stop()
+        isFinalValidating = true
+        updateButtonState()
         performFinalValidation(with: payload.image, base64: payload.base64)
     }
     
@@ -284,6 +297,7 @@ final class DocumentPhotoCheckStreamViewController: UIViewController, BaseView {
     }
     
     private func handleFinalValidationSuccess(image: UIImage) {
+        needsRetake = false
         let successVC = PhotoSuccessViewController(photoImage: image) { [weak self] in
             self?.navigationController?.popViewController(animated: true)
         }
@@ -297,6 +311,7 @@ final class DocumentPhotoCheckStreamViewController: UIViewController, BaseView {
         messageLabel.text = message
         messageLabel.isHidden = false
         updateButtonState()
+        cameraService.start()
     }
     
     @objc private func toggleLandmarks(_ sender: UISwitch) {
