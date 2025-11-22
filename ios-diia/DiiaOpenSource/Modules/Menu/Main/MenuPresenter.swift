@@ -2,6 +2,7 @@ import UIKit
 import DiiaMVPModule
 import DiiaUIComponents
 import DiiaAuthorization
+import DiiaCommonTypes
 
 protocol MenuAction: BasePresenter {
     func logout()
@@ -123,6 +124,14 @@ private extension MenuPresenter {
                 title: "Камера (Live)",
                 onClick: { [weak self] in
                     self?.view.open(module: LiveCameraModule())
+                }),
+            DSListItemViewModel(
+                id: "documentPhotoOnboarding",
+                leftSmallIcon: R.image.menuDocumentsActive.image,
+                title: "Перевірка фото (онбординг)",
+                onClick: { [weak self] in
+                    let cmp = BaseContextMenuProvider(publicService: .documentPhotoCheck)
+                    self?.view.open(module: DocumentPhotoOnboardingModule(contextMenuProvider: cmp))
                 }),
             DSListItemViewModel(
                 id: "",

@@ -22,19 +22,20 @@ class PublicServicesAPIClient: ApiClient<PublicServicesAPI>, PublicServicesAPICl
     }
     
     private func addPhotoVerificationService(to response: PublicServiceResponse) -> PublicServiceResponse {
-        // Створюємо сервіс перевірки фото на документи
+        // Створюємо сервіс перевірки фото на документи (локальний фолбек)
+        let code = PublicServiceType.documentPhotoCheck.rawValue
         let photoVerificationService = PublicServiceModel(
             status: .active,
             name: "Перевірка фото на документи",
-            code: PublicServiceType.photoVerification.rawValue,
+            code: code,
             badgeNumber: nil,
             search: "перевірка фото документи",
             contextMenu: nil
         )
         
         let photoVerificationCategory = PublicServiceCategory(
-            code: "photo_verification_category",
-            icon: "ic_photo_verification",
+            code: code,
+            icon: code,
             name: "Перевірка фото на документи", 
             status: .active,
             visibleSearch: true,
