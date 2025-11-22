@@ -221,8 +221,7 @@ final class DocumentPhotoCheckStreamViewController: UIViewController, BaseView {
             overlayView.state = .idle
             return
         }
-        let mapped = Constants.photoErrorMessages[first.code] ?? first.message
-        messageLabel.text = mapped
+        messageLabel.text = localizedMessage(code: first.code, fallback: first.message)
         messageLabel.isHidden = false
         overlayView.state = .idle
         isFrameValid = false
@@ -308,7 +307,7 @@ final class DocumentPhotoCheckStreamViewController: UIViewController, BaseView {
     private func handleFinalValidationFailure(message: String) {
         needsRetake = true
         isFrameValid = false
-        messageLabel.text = message
+        messageLabel.text = localizedMessage(code: nil, fallback: message)
         messageLabel.isHidden = false
         updateButtonState()
         cameraService.start()
@@ -377,6 +376,18 @@ final class DocumentPhotoCheckStreamViewController: UIViewController, BaseView {
         }
         rect = rect.integral
         return image.cropped(to: rect)
+    }
+    
+    private func localizedMessage(code: String?, fallback: String) -> String {
+        if let code, let mapped = Constants.photoErrorMessages[code] {
+            return mapped
+        }
+        let lower = fallback.lowercased()
+        if lower.contains("underexposed") { return "Недостатнє освітлення." }
+        if lower.contains("overexposed") { return "Занадто яскраво." }
+        if lower.contains("blurry") { return "Фото розмите." }
+        if lower.contains("shadow") { return "Тіні на обличчі." }
+        return fallback
     }
 }
 

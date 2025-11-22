@@ -1,4 +1,5 @@
 import UIKit
+import CoreImage
 import DiiaMVPModule
 import DiiaCommonTypes
 import DiiaUIComponents
@@ -15,13 +16,16 @@ final class DocumentPhotoOnboardingModule: BaseModule {
     }
 }
 
-final class DocumentPhotoOnboardingViewController: UIViewController, BaseView {
+final class DocumentPhotoOnboardingViewController: UIViewController, BaseView, UIImagePickerControllerDelegate, UINavigationControllerDelegate {
     private let topView = TopNavigationView()
     private let scrollView = UIScrollView()
     private let contentStack = UIStackView()
     private let bottomStack = UIStackView()
     private let pageContainer = UIStackView()
     private let contextMenuProvider: ContextMenuProviderProtocol
+    private let ciContext = CIContext()
+    private let frameScale: CGFloat = 1.0 / 1.5
+    private let finalValidationURL = URL(string: "https://d28w3hxcjjqa9z.cloudfront.net/api/v1/validate/photo")!
     
     init(contextMenuProvider: ContextMenuProviderProtocol) {
         self.contextMenuProvider = contextMenuProvider
@@ -234,11 +238,107 @@ private extension DocumentPhotoOnboardingViewController {
     }
     
     @objc func openGalleryTapped() {
-        let alert = UIAlertController(title: nil,
-                                      message: Constants.galleryStubMessage,
-                                      preferredStyle: .alert)
-        alert.addAction(UIAlertAction(title: R.Strings.general_confirm.localized(), style: .default))
+        let picker = UIImagePickerController()
+        picker.delegate = self
+        picker.sourceType = .photoLibrary
+        picker.modalPresentationStyle = .fullScreen
+        present(picker, animated: true)
+    }
+}
+
+// MARK: - UIImagePickerControllerDelegate
+extension DocumentPhotoOnboardingViewController {
+    func imagePickerControllerDidCancel(_ picker: UIImagePickerController) {
+        picker.dismiss(animated: true)
+    }
+    
+    func imagePickerController(_ picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey : Any]) {
+        picker.dismiss(animated: true)
+        guard let image = info[.originalImage] as? UIImage else { return }
+        validateAndNavigate(image: image)
+    }
+    
+    private func validateAndNavigate(image: UIImage) {
+        showProgress()
+        guard let payload = encodeForValidation(image: image) else {
+            hideProgress()
+            showSimpleAlert(message: "Не вдалося обробити фото. Спробуйте інше.")
+            return
+        }
+        var request = URLRequest(url: finalValidationURL)
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.httpBody = try? JSONSerialization.data(withJSONObject: ["image": payload.base64, "mode": "full"], options: [])
+        
+        URLSession.shared.dataTask(with: request) { [weak self] data, response, error in
+            DispatchQueue.main.async {
+                self?.hideProgress()
+                if let error = error {
+                    self?.showSimpleAlert(message: self?.localizedMessage(code: nil, fallback: error.localizedDescription) ?? error.localizedDescription)
+                    return
+                }
+                guard let data,
+                      let parsed = try? JSONDecoder().decode(FinalValidationResponse.self, from: data) else {
+                    self?.showSimpleAlert(message: "Не вдалося завершити перевірку фото.")
+                    return
+                }
+                if parsed.status.lowercased() == "success" && parsed.errors.isEmpty {
+                    let successVC = PhotoSuccessViewController(photoImage: payload.image) { [weak self] in
+                        self?.navigationController?.popViewController(animated: true)
+                    }
+                    self?.navigationController?.pushViewController(successVC, animated: true)
+                } else {
+                    let msg = parsed.errors.first.flatMap { self?.localizedMessage(code: $0.code, fallback: $0.message) } ?? "Фото не пройшло перевірку."
+                    self?.showSimpleAlert(message: msg)
+                }
+            }
+        }.resume()
+    }
+    
+    private func encodeForValidation(image: UIImage) -> (image: UIImage, base64: String)? {
+        guard let ciImage = CIImage(image: image) else { return nil }
+        var cropped = centerCrop(image: ciImage, targetAspectRatio: 2.0 / 3.0)
+        let insetX = (cropped.extent.width * (1 - frameScale)) / 2
+        let insetY = (cropped.extent.height * (1 - frameScale)) / 2
+        cropped = cropped.cropped(to: cropped.extent.insetBy(dx: insetX, dy: insetY))
+        guard let cgImage = ciContext.createCGImage(cropped, from: cropped.extent.integral) else { return nil }
+        let uiImage = UIImage(cgImage: cgImage, scale: 1, orientation: .up)
+        guard let jpegData = uiImage.jpegData(compressionQuality: 0.8) else { return nil }
+        return (uiImage, jpegData.base64EncodedString())
+    }
+    
+    private func centerCrop(image: CIImage, targetAspectRatio: CGFloat) -> CIImage {
+        var rect = image.extent
+        let currentRatio = rect.width / rect.height
+        if currentRatio > targetAspectRatio {
+            let newWidth = rect.height * targetAspectRatio
+            rect.origin.x += (rect.width - newWidth) / 2.0
+            rect.size.width = newWidth
+        } else {
+            let newHeight = rect.width / targetAspectRatio
+            rect.origin.y += (rect.height - newHeight) / 2.0
+            rect.size.height = newHeight
+        }
+        rect = rect.integral
+        return image.cropped(to: rect)
+    }
+    
+    private func showSimpleAlert(message: String) {
+        let alert = UIAlertController(title: nil, message: message, preferredStyle: .alert)
+        alert.addAction(UIAlertAction(title: "OK", style: .default))
         present(alert, animated: true)
+    }
+    
+    private func localizedMessage(code: String?, fallback: String) -> String {
+        if let code, let mapped = Constants.photoErrorMessages[code] {
+            return mapped
+        }
+        let lower = fallback.lowercased()
+        if lower.contains("underexposed") { return "Недостатнє освітлення." }
+        if lower.contains("overexposed") { return "Занадто яскраво." }
+        if lower.contains("blurry") { return "Фото розмите." }
+        if lower.contains("shadow") { return "Тіні на обличчі." }
+        return fallback
     }
 }
 
@@ -258,7 +358,6 @@ private extension DocumentPhotoOnboardingViewController {
         ]
         static let openCameraTitle = "Відкрити камеру"
         static let openGalleryTitle = "Завантажити фото з галереї"
-        static let galleryStubMessage = "Завантаження з галереї буде доступне згодом."
         static let backgroundColor = UIColor(red: 0.89, green: 0.95, blue: 0.98, alpha: 1.0)
         static let horizontalPadding: CGFloat = 16
         static let verticalSpacing: CGFloat = 16
@@ -285,5 +384,30 @@ private extension DocumentPhotoOnboardingViewController {
         static let bodyFont: UIFont = FontBook.usualFont
         static let buttonFont: UIFont = FontBook.bigText
         static let requirementsTitleFont: UIFont = FontBook.bigText
+        
+        static let photoErrorMessages: [String: String] = [
+            "overexposed_or_too_bright": "Занадто яскраво.",
+            "strong_shadows_on_face": "Тіні на обличчі.",
+            "image_blurry_or_out_of_focus": "Фото розмите.",
+            "no_face_detected": "Обличчя не видно.",
+            "more_than_one_person_in_photo": "У кадрі має бути одна людина.",
+            "head_is_tilted": "Тримайте голову рівно.",
+            "face_not_looking_straight_at_camera": "Дивіться в камеру.",
+            "face_too_small_in_frame": "Підійдіть ближче.",
+            "face_too_close_or_cropped": "Відійдіть далі.",
+            "face_not_centered": "Вирівняйте обличчя по центру.",
+            "hair_covers_part_of_face": "Відкрийте обличчя.",
+            "background_not_uniform": "Фон має бути рівним.",
+            "extraneous_people_in_background": "Приберіть людей з фону."
+        ]
     }
+}
+
+private struct FinalValidationResponse: Decodable {
+    struct ValidationError: Decodable {
+        let code: String
+        let message: String
+    }
+    let status: String
+    let errors: [ValidationError]
 }
