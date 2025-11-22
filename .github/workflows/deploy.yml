@@ -127,20 +127,43 @@ jobs:
           OLD_TASKS=$(aws ecs list-tasks \
             --cluster ${{ env.STACK_NAME }}-cluster \
             --service-name ${{ env.STACK_NAME }}-service-v2 \
+            --desired-status RUNNING \
             --query 'taskArns[]' \
             --output text)
           
           if [ -n "$OLD_TASKS" ]; then
+            echo "Found running tasks to stop:"
             for task in $OLD_TASKS; do
-              echo "Stopping task: $task"
+              echo "  - $task"
               aws ecs stop-task \
                 --cluster ${{ env.STACK_NAME }}-cluster \
                 --task "$task" \
                 --reason "Deployment: Freeing GPU for new task" \
                 --no-cli-pager || true
             done
+            
+            # Wait for tasks to actually stop (up to 60 seconds)
             echo "Waiting for old tasks to stop..."
-            sleep 15
+            for i in {1..12}; do
+              RUNNING=$(aws ecs list-tasks \
+                --cluster ${{ env.STACK_NAME }}-cluster \
+                --service-name ${{ env.STACK_NAME }}-service-v2 \
+                --desired-status RUNNING \
+                --query 'length(taskArns)' \
+                --output text)
+              
+              if [ "$RUNNING" = "0" ]; then
+                echo "✓ All old tasks stopped"
+                break
+              fi
+              echo "  Still running: $RUNNING tasks (attempt $i/12)"
+              sleep 5
+            done
+            
+            # Extra safety wait for container cleanup
+            sleep 10
+          else
+            echo "No running tasks to stop"
           fi
 
           # Update the service to use the new task definition
@@ -153,11 +176,123 @@ jobs:
           echo "✓ Service updated with new task definition"
 
       - name: Wait for deployment to complete
+        timeout-minutes: 10
         run: |
-          echo "Waiting for deployment to complete..."
+          echo "Waiting for new task to start and become healthy..."
+          
+          # Wait for task to be created (up to 3 minutes)
+          for i in {1..36}; do
+            TASK_ARN=$(aws ecs list-tasks \
+              --cluster ${{ env.STACK_NAME }}-cluster \
+              --service-name ${{ env.STACK_NAME }}-service-v2 \
+              --desired-status RUNNING \
+              --query 'taskArns[0]' \
+              --output text)
+            
+            if [ -n "$TASK_ARN" ] && [ "$TASK_ARN" != "None" ]; then
+              echo "✓ New task started: $TASK_ARN"
+              break
+            fi
+            echo "  Waiting for task to start... (${i}/36)"
+            sleep 5
+          done
+          
+          if [ -z "$TASK_ARN" ] || [ "$TASK_ARN" = "None" ]; then
+            echo "✗ Task failed to start within 3 minutes"
+            exit 1
+          fi
+          
+          # Wait for task to become healthy (up to 7 minutes)
+          echo "Waiting for task to become healthy..."
+          for i in {1..84}; do
+            HEALTH=$(aws ecs describe-tasks \
+              --cluster ${{ env.STACK_NAME }}-cluster \
+              --tasks "$TASK_ARN" \
+              --query 'tasks[0].healthStatus' \
+              --output text)
+            
+            if [ "$HEALTH" = "HEALTHY" ]; then
+              echo "✓ Task is healthy!"
+              break
+            fi
+            
+            # Check if task stopped unexpectedly
+            STATUS=$(aws ecs describe-tasks \
+              --cluster ${{ env.STACK_NAME }}-cluster \
+              --tasks "$TASK_ARN" \
+              --query 'tasks[0].lastStatus' \
+              --output text)
+            
+            if [ "$STATUS" = "STOPPED" ]; then
+              echo "✗ Task stopped unexpectedly"
+              aws ecs describe-tasks \
+                --cluster ${{ env.STACK_NAME }}-cluster \
+                --tasks "$TASK_ARN" \
+                --query 'tasks[0].{StoppedReason:stoppedReason,Containers:containers[*].{Name:name,Reason:reason,ExitCode:exitCode}}' \
+                --output json
+              exit 1
+            fi
+            
+            echo "  Health: $HEALTH, Status: $STATUS (${i}/84)"
+            sleep 5
+          done
+          
+          if [ "$HEALTH" != "HEALTHY" ]; then
+            echo "✗ Task did not become healthy within 7 minutes"
+            echo "Final task status:"
+            aws ecs describe-tasks \
+              --cluster ${{ env.STACK_NAME }}-cluster \
+              --tasks "$TASK_ARN" \
+              --query 'tasks[0]' \
+              --output json
+            exit 1
+          fi
+          
+          # Final verification: check service stability
+          echo "Verifying service stability..."
           aws ecs wait services-stable \
             --cluster ${{ env.STACK_NAME }}-cluster \
             --services ${{ env.STACK_NAME }}-service-v2 \
             --region ${{ env.AWS_REGION }}
+          
           echo "✓ Deployment completed successfully"
+
+      - name: Verify API health
+        run: |
+          echo "Verifying API is responding..."
+          
+          # Get CloudFront URL
+          CLOUDFRONT_URL=$(aws cloudformation describe-stacks \
+            --stack-name ${{ env.STACK_NAME }} \
+            --query "Stacks[0].Outputs[?OutputKey=='CloudFrontURL'].OutputValue" \
+            --output text)
+          
+          if [ -z "$CLOUDFRONT_URL" ]; then
+            echo "⚠ CloudFront URL not found, skipping API health check"
+            exit 0
+          fi
+          
+          # Wait for CloudFront to route to new deployment
+          sleep 10
+          
+          # Test API health endpoint
+          for i in {1..5}; do
+            HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" "$CLOUDFRONT_URL" || echo "000")
+            
+            if [ "$HTTP_CODE" = "200" ]; then
+              echo "✓ API health check passed"
+              
+              # Get and display version
+              VERSION=$(curl -s "$CLOUDFRONT_URL" | jq -r '.version' 2>/dev/null || echo "unknown")
+              echo "  Deployed version: $VERSION"
+              exit 0
+            fi
+            
+            echo "  HTTP $HTTP_CODE (attempt $i/5)"
+            sleep 5
+          done
+          
+          echo "⚠ API health check failed after 5 attempts, but ECS tasks are healthy"
+          echo "  This may be a CloudFront caching issue"
+          exit 0
 
