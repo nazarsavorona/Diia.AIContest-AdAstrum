@@ -73,6 +73,13 @@ final class DocumentPhotoCheckStreamViewController: UIViewController, BaseView {
     private var lastValidationAt: CFTimeInterval = 0
     private let validationThrottle: CFTimeInterval = 0.6
     private let frameScale: CGFloat = 1.0 / 1.5
+    private var lastSampleBuffer: CMSampleBuffer?
+    private var lastValidImage: UIImage?
+    private var needsRetake = false
+    private var isFinalValidating = false
+    private var lastOrientation: CGImagePropertyOrientation = .right
+    private let finalValidationURL = URL(string: "https://d28w3hxcjjqa9z.cloudfront.net/api/v1/validate/photo")!
+    private let ciContext = CIContext()
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -184,14 +191,21 @@ final class DocumentPhotoCheckStreamViewController: UIViewController, BaseView {
     }
     
     private func updateButtonState() {
-        if isFrameValid {
+        if isFrameValid && !needsRetake && !isFinalValidating {
             continueButton.isEnabled = true
             continueButton.backgroundColor = .black
             continueButton.setTitleColor(.white, for: .normal)
+            continueButton.setTitle("Продовжити", for: .normal)
+        } else if needsRetake {
+            continueButton.isEnabled = true
+            continueButton.backgroundColor = .black
+            continueButton.setTitleColor(.white, for: .normal)
+            continueButton.setTitle("Завантажити нове фото", for: .normal)
         } else {
             continueButton.isEnabled = false
             continueButton.backgroundColor = UIColor.black.withAlphaComponent(0.2)
             continueButton.setTitleColor(UIColor.white.withAlphaComponent(0.6), for: .disabled)
+            continueButton.setTitle("Продовжити", for: .disabled)
         }
     }
     
@@ -212,12 +226,18 @@ final class DocumentPhotoCheckStreamViewController: UIViewController, BaseView {
     }
     
     @objc private func continueTapped() {
-        // TODO: hook real final validation endpoint and navigation to confirmation screen.
-        let alert = UIAlertController(title: "Фото пройшло перевірку", message: "Далі відкриваємо фінальну сторінку заяви.", preferredStyle: .alert)
-        alert.addAction(UIAlertAction(title: "Ок", style: .default) { [weak self] _ in
-            self?.closeModule(animated: true)
-        })
-        present(alert, animated: true)
+        if isFinalValidating { return }
+        if needsRetake {
+            needsRetake = false
+            isFrameValid = false
+            messageLabel.isHidden = true
+            lastValidImage = nil
+            updateButtonState()
+            return
+        }
+        guard let payload = encodeForFinalValidation() else { return }
+        lastValidImage = payload.image
+        performFinalValidation(with: payload.image, base64: payload.base64)
     }
     
     private func showPlaceholder(reason: String) {
@@ -229,6 +249,54 @@ final class DocumentPhotoCheckStreamViewController: UIViewController, BaseView {
         previewLayer?.removeFromSuperlayer()
         previewLayer = nil
         updateLandmarksVisibility()
+    }
+
+    private func performFinalValidation(with image: UIImage, base64: String) {
+        isFinalValidating = true
+        continueButton.setTitle("Перевіряємо...", for: .normal)
+        continueButton.isEnabled = false
+        let requestBody: [String: Any] = ["image": base64, "mode": "full"]
+        var request = URLRequest(url: finalValidationURL)
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.httpBody = try? JSONSerialization.data(withJSONObject: requestBody, options: [])
+        
+        URLSession.shared.dataTask(with: request) { [weak self] data, response, error in
+            DispatchQueue.main.async {
+                self?.isFinalValidating = false
+                if let error = error {
+                    self?.handleFinalValidationFailure(message: error.localizedDescription)
+                    return
+                }
+                guard let data,
+                      let parsed = try? JSONDecoder().decode(FinalValidationResponse.self, from: data) else {
+                    self?.handleFinalValidationFailure(message: "Помилка валідації.")
+                    return
+                }
+                if parsed.status.lowercased() == "success" && parsed.errors.isEmpty {
+                    self?.handleFinalValidationSuccess(image: image)
+                } else {
+                    let msg = parsed.errors.first.flatMap { Constants.photoErrorMessages[$0.code] ?? $0.message } ?? "Фото не пройшло перевірку."
+                    self?.handleFinalValidationFailure(message: msg)
+                }
+            }
+        }.resume()
+    }
+    
+    private func handleFinalValidationSuccess(image: UIImage) {
+        let successVC = PhotoSuccessViewController(photoImage: image) { [weak self] in
+            self?.navigationController?.popViewController(animated: true)
+        }
+        navigationController?.pushViewController(successVC, animated: true)
+        updateButtonState()
+    }
+    
+    private func handleFinalValidationFailure(message: String) {
+        needsRetake = true
+        isFrameValid = false
+        messageLabel.text = message
+        messageLabel.isHidden = false
+        updateButtonState()
     }
     
     @objc private func toggleLandmarks(_ sender: UISwitch) {
@@ -263,11 +331,45 @@ final class DocumentPhotoCheckStreamViewController: UIViewController, BaseView {
         target.size = CGSize(width: newWidth, height: newHeight)
         return target
     }
+
+    private func encodeForFinalValidation() -> (image: UIImage, base64: String)? {
+        guard let sampleBuffer = lastSampleBuffer,
+              let pixelBuffer = CMSampleBufferGetImageBuffer(sampleBuffer) else { return nil }
+        let oriented = CIImage(cvPixelBuffer: pixelBuffer).oriented(lastOrientation)
+        var cropped = centerCrop(image: oriented, targetAspectRatio: 2.0 / 3.0)
+        let scale = frameScale
+        let insetX = (cropped.extent.width * (1 - scale)) / 2
+        let insetY = (cropped.extent.height * (1 - scale)) / 2
+        cropped = cropped.cropped(to: cropped.extent.insetBy(dx: insetX, dy: insetY))
+        guard let cgImage = ciContext.createCGImage(cropped, from: cropped.extent.integral) else { return nil }
+        let uiImage = UIImage(cgImage: cgImage, scale: 1, orientation: .up)
+        guard let jpegData = uiImage.jpegData(compressionQuality: 0.8) else { return nil }
+        let base64 = jpegData.base64EncodedString()
+        return (uiImage, base64)
+    }
+    
+    private func centerCrop(image: CIImage, targetAspectRatio: CGFloat) -> CIImage {
+        var rect = image.extent
+        let currentRatio = rect.width / rect.height
+        if currentRatio > targetAspectRatio {
+            let newWidth = rect.height * targetAspectRatio
+            rect.origin.x += (rect.width - newWidth) / 2.0
+            rect.size.width = newWidth
+        } else {
+            let newHeight = rect.width / targetAspectRatio
+            rect.origin.y += (rect.height - newHeight) / 2.0
+            rect.size.height = newHeight
+        }
+        rect = rect.integral
+        return image.cropped(to: rect)
+    }
 }
 
 extension DocumentPhotoCheckStreamViewController: CameraCaptureServiceDelegate {
     func cameraCaptureService(_ service: CameraCaptureService, didOutput sampleBuffer: CMSampleBuffer, orientation: CGImagePropertyOrientation) {
         let now = CACurrentMediaTime()
+        lastSampleBuffer = sampleBuffer
+        lastOrientation = orientation
         guard !isValidating, now - lastValidationAt > validationThrottle else { return }
         isValidating = true
         lastValidationAt = now
@@ -282,6 +384,9 @@ extension DocumentPhotoCheckStreamViewController: CameraCaptureServiceDelegate {
                     self.messageLabel.isHidden = true
                     self.isFrameValid = true
                     self.overlayView.state = .success
+                    if let payload = self.encodeForFinalValidation() {
+                        self.lastValidImage = payload.image
+                    }
                     if self.showLandmarks {
                         self.landmarksOverlay.isHidden = false
                         self.landmarksOverlay.configure(landmarks: detection.landmarks,
@@ -305,6 +410,7 @@ extension DocumentPhotoCheckStreamViewController: CameraCaptureServiceDelegate {
                 self.messageLabel.isHidden = false
                 self.overlayView.state = .idle
                 self.landmarksOverlay.isHidden = true
+                self.needsRetake = true
             }
         }
     }
@@ -350,6 +456,15 @@ private extension DocumentPhotoCheckStreamViewController {
             "extraneous_people_in_background": "Приберіть людей з фону."
         ]
     }
+}
+
+private struct FinalValidationResponse: Decodable {
+    struct ValidationError: Decodable {
+        let code: String
+        let message: String
+    }
+    let status: String
+    let errors: [ValidationError]
 }
 
 private final class PaddingLabel: UILabel {
