@@ -11,12 +11,22 @@ final class DocumentPhotoCheckStreamViewController: UIViewController, BaseView {
     
     private let topView = TopNavigationView()
     private let previewContainer = UIView()
+    private let placeholderImageView: UIImageView = {
+        let iv = UIImageView()
+        iv.contentMode = .scaleAspectFill
+        iv.clipsToBounds = true
+        iv.isHidden = true
+        iv.backgroundColor = UIColor(white: 0.15, alpha: 1)
+        iv.image = R.image.light_background.image
+        return iv
+    }()
+    private let landmarksOverlay = LandmarksOverlayView()
     private let overlayView = PhotoCheckFrameView()
     private let messageLabel: UILabel = {
         let label = PaddingLabel()
         label.numberOfLines = 0
         label.textAlignment = .center
-        label.font = FontBook.usualFont
+        label.font = FontBook.bigText
         label.textColor = .white
         label.backgroundColor = UIColor.black.withAlphaComponent(0.75)
         label.layer.cornerRadius = 6
@@ -34,6 +44,23 @@ final class DocumentPhotoCheckStreamViewController: UIViewController, BaseView {
         button.isEnabled = false
         return button
     }()
+    private let landmarksToggleStack: UIStackView = {
+        let label = UILabel()
+        label.font = FontBook.usualFont
+        label.textColor = .label
+        label.text = "Landmarks"
+        let sw = UISwitch()
+        sw.isOn = false
+        let stack = UIStackView(arrangedSubviews: [label, sw])
+        stack.axis = .horizontal
+        stack.spacing = 6
+        stack.alignment = .center
+        stack.translatesAutoresizingMaskIntoConstraints = false
+        return stack
+    }()
+    private var showLandmarks = false {
+        didSet { updateLandmarksVisibility() }
+    }
     
     private var isFrameValid: Bool = false {
         didSet {
@@ -63,22 +90,31 @@ final class DocumentPhotoCheckStreamViewController: UIViewController, BaseView {
     override func viewDidLayoutSubviews() {
         super.viewDidLayoutSubviews()
         previewLayer?.frame = previewContainer.bounds
-        overlayView.frame = previewContainer.bounds.insetBy(dx: 12, dy: 12)
+        overlayView.frame = previewContainer.bounds
+        landmarksOverlay.frame = previewContainer.bounds
     }
     
     private func setupLayout() {
         topView.translatesAutoresizingMaskIntoConstraints = false
         previewContainer.translatesAutoresizingMaskIntoConstraints = false
+        placeholderImageView.translatesAutoresizingMaskIntoConstraints = false
+        landmarksOverlay.translatesAutoresizingMaskIntoConstraints = false
         continueButton.translatesAutoresizingMaskIntoConstraints = false
         messageLabel.translatesAutoresizingMaskIntoConstraints = false
         overlayView.translatesAutoresizingMaskIntoConstraints = false
         
         view.addSubview(topView)
         view.addSubview(previewContainer)
-        view.addSubview(continueButton)
         
+        previewContainer.addSubview(placeholderImageView)
+        previewContainer.addSubview(landmarksOverlay)
         previewContainer.addSubview(messageLabel)
         previewContainer.addSubview(overlayView)
+        previewContainer.addSubview(landmarksToggleStack)
+        previewContainer.addSubview(continueButton)
+        if let toggle = landmarksToggleStack.arrangedSubviews.last as? UISwitch {
+            toggle.addTarget(self, action: #selector(toggleLandmarks(_:)), for: .valueChanged)
+        }
         
         topView.setupTitle(title: "Фото для перевірки")
         topView.setupOnClose { [weak self] in
@@ -94,10 +130,20 @@ final class DocumentPhotoCheckStreamViewController: UIViewController, BaseView {
             topView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             topView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
             
-            previewContainer.topAnchor.constraint(equalTo: topView.bottomAnchor, constant: 8),
+            previewContainer.topAnchor.constraint(equalTo: topView.bottomAnchor, constant: 4),
             previewContainer.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             previewContainer.trailingAnchor.constraint(equalTo: view.trailingAnchor),
-            previewContainer.heightAnchor.constraint(equalTo: previewContainer.widthAnchor, multiplier: 4.0/3.0),
+            previewContainer.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor),
+            
+            placeholderImageView.leadingAnchor.constraint(equalTo: previewContainer.leadingAnchor),
+            placeholderImageView.trailingAnchor.constraint(equalTo: previewContainer.trailingAnchor),
+            placeholderImageView.topAnchor.constraint(equalTo: previewContainer.topAnchor),
+            placeholderImageView.bottomAnchor.constraint(equalTo: previewContainer.bottomAnchor),
+            
+            landmarksOverlay.leadingAnchor.constraint(equalTo: previewContainer.leadingAnchor),
+            landmarksOverlay.trailingAnchor.constraint(equalTo: previewContainer.trailingAnchor),
+            landmarksOverlay.topAnchor.constraint(equalTo: previewContainer.topAnchor),
+            landmarksOverlay.bottomAnchor.constraint(equalTo: previewContainer.bottomAnchor),
             
             messageLabel.centerXAnchor.constraint(equalTo: previewContainer.centerXAnchor),
             messageLabel.topAnchor.constraint(equalTo: previewContainer.topAnchor, constant: 12),
@@ -107,9 +153,12 @@ final class DocumentPhotoCheckStreamViewController: UIViewController, BaseView {
             overlayView.topAnchor.constraint(equalTo: previewContainer.topAnchor),
             overlayView.bottomAnchor.constraint(equalTo: previewContainer.bottomAnchor),
             
-            continueButton.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 24),
-            continueButton.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -24),
-            continueButton.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -24),
+            landmarksToggleStack.trailingAnchor.constraint(equalTo: previewContainer.trailingAnchor, constant: -12),
+            landmarksToggleStack.topAnchor.constraint(equalTo: previewContainer.topAnchor, constant: 12),
+            
+            continueButton.centerXAnchor.constraint(equalTo: previewContainer.centerXAnchor),
+            continueButton.widthAnchor.constraint(equalTo: previewContainer.widthAnchor, multiplier: 0.7),
+            continueButton.bottomAnchor.constraint(equalTo: previewContainer.safeAreaLayoutGuide.bottomAnchor, constant: -20),
             continueButton.heightAnchor.constraint(equalToConstant: 56)
         ])
     }
@@ -151,6 +200,9 @@ final class DocumentPhotoCheckStreamViewController: UIViewController, BaseView {
         messageLabel.isHidden = false
         overlayView.state = .idle
         isFrameValid = false
+        if showLandmarks {
+            landmarksOverlay.isHidden = false
+        }
     }
     
     @objc private func continueTapped() {
@@ -160,6 +212,29 @@ final class DocumentPhotoCheckStreamViewController: UIViewController, BaseView {
             self?.closeModule(animated: true)
         })
         present(alert, animated: true)
+    }
+    
+    private func showPlaceholder(reason: String) {
+        placeholderImageView.isHidden = false
+        messageLabel.text = reason
+        messageLabel.isHidden = false
+        overlayView.state = .idle
+        isFrameValid = false
+        previewLayer?.removeFromSuperlayer()
+        previewLayer = nil
+        updateLandmarksVisibility()
+    }
+    
+    @objc private func toggleLandmarks(_ sender: UISwitch) {
+        showLandmarks = sender.isOn
+        updateLandmarksVisibility()
+    }
+    
+    private func updateLandmarksVisibility() {
+        landmarksOverlay.isHidden = !showLandmarks
+        if !showLandmarks {
+            landmarksOverlay.configure(landmarks: [], imageSize: lastFrameSize, connections: [])
+        }
     }
 }
 
@@ -180,14 +255,29 @@ extension DocumentPhotoCheckStreamViewController: CameraCaptureServiceDelegate {
                     self.messageLabel.isHidden = true
                     self.isFrameValid = true
                     self.overlayView.state = .success
+                    if self.showLandmarks {
+                        self.landmarksOverlay.isHidden = false
+                        self.landmarksOverlay.configure(landmarks: detection.landmarks,
+                                                        imageSize: detection.originalImageSize,
+                                                        connections: mediaPipeFullMeshConnections,
+                                                        faceBoundingBox: detection.faceBoundingBox)
+                    }
                 } else {
                     self.showErrors(detection.errors)
+                    if self.showLandmarks {
+                        self.landmarksOverlay.isHidden = false
+                        self.landmarksOverlay.configure(landmarks: detection.landmarks,
+                                                        imageSize: detection.originalImageSize,
+                                                        connections: mediaPipeFullMeshConnections,
+                                                        faceBoundingBox: detection.faceBoundingBox)
+                    }
                 }
             case .failure(let error):
                 self.isFrameValid = false
                 self.messageLabel.text = error.localizedDescription
                 self.messageLabel.isHidden = false
                 self.overlayView.state = .idle
+                self.landmarksOverlay.isHidden = true
             }
         }
     }
@@ -272,8 +362,28 @@ private final class PhotoCheckFrameView: UIView {
     override func draw(_ rect: CGRect) {
         let path = UIBezierPath()
         path.lineWidth = 4
-        let insetRect = rect.insetBy(dx: 12, dy: 12)
-        let corner: CGFloat = 28
+        // Compute target rect with 2:3 aspect ratio centered, scaled down
+        var target = rect.insetBy(dx: 16, dy: 16)
+        let targetAspect: CGFloat = 2.0 / 3.0
+        let currentAspect = target.width / target.height
+        if currentAspect > targetAspect {
+            let newWidth = target.height * targetAspect
+            target.origin.x += (target.width - newWidth) / 2
+            target.size.width = newWidth
+        } else {
+            let newHeight = target.width / targetAspect
+            target.origin.y += (target.height - newHeight) / 2
+            target.size.height = newHeight
+        }
+        // Scale down by factor to make frame smaller
+        let scale: CGFloat = 1.0 / 1.5
+        let newWidth = target.width * scale
+        let newHeight = target.height * scale
+        target.origin.x += (target.width - newWidth) / 2
+        target.origin.y += (target.height - newHeight) / 2
+        target.size = CGSize(width: newWidth, height: newHeight)
+        
+        let corner: CGFloat = 24
         let color: UIColor = state == .success ? UIColor(red: 0.21, green: 0.73, blue: 0.36, alpha: 1) : UIColor(white: 0.9, alpha: 1)
         color.setStroke()
         
@@ -285,10 +395,10 @@ private final class PhotoCheckFrameView: UIView {
             path.addLine(to: CGPoint(x: x, y: y + dy * corner))
         }
         
-        addCorner(insetRect.minX, insetRect.minY, 1, 1)
-        addCorner(insetRect.maxX, insetRect.minY, -1, 1)
-        addCorner(insetRect.minX, insetRect.maxY, 1, -1)
-        addCorner(insetRect.maxX, insetRect.maxY, -1, -1)
+        addCorner(target.minX, target.minY, 1, 1)
+        addCorner(target.maxX, target.minY, -1, 1)
+        addCorner(target.minX, target.maxY, 1, -1)
+        addCorner(target.maxX, target.maxY, -1, -1)
         
         path.stroke()
     }
