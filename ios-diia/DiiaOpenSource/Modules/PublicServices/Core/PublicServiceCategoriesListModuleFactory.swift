@@ -23,6 +23,9 @@ private extension Dictionary {
     static var publicServiceRouteCreateHandlers: [ServiceTypeCode: PublicServiceRouteCreateHandler] {[
         PublicServiceType.criminalRecordCertificate.rawValue: { items in
             return PSCriminalRecordExtractRoute(contextMenuItems: items)
+        },
+        PublicServiceType.documentPhotoCheck.rawValue: { items in
+            return PSDocumentPhotoCheckRoute(contextMenuItems: items)
         }]}
 }
 

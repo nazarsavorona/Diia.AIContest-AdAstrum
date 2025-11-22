@@ -6,11 +6,14 @@ enum PublicServiceType: String, Codable, EnumDecodable, CaseIterable {
     
     case unknown
     case criminalRecordCertificate
+    case documentPhotoCheck
     
     var endpoint: String {
         switch self {
         case .criminalRecordCertificate:
             return "criminal-cert"
+        case .documentPhotoCheck:
+            return "photo-check"
         default:
             return self.rawValue
         }

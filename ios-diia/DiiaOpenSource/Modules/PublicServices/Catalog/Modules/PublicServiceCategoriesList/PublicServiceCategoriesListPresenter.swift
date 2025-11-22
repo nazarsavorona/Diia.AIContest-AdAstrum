@@ -144,6 +144,10 @@ final class PublicServiceCategoriesListPresenter: NSObject, PublicServiceCategor
                     if let cachedResponse = self?.storage?.getPublicServicesResponse() {
                         self?.processResponse(response: cachedResponse)
                     } else {
+                        self?.processResponse(response: self?.makeLocalFallbackResponse() ?? .init(publicServicesCategories: [],
+                                                                                                   tabs: [],
+                                                                                                   additionalElements: nil))
+                        self?.view.setState(state: .ready)
                         self?.showNoInternetTemplate(error)
                     }
                 default:
@@ -165,13 +169,14 @@ final class PublicServiceCategoriesListPresenter: NSObject, PublicServiceCategor
             guard let self = self else { return false }
             return self.model.publicServiceOpener.canOpenPublicService(type: code)
         }
-        let allItems = response
+        var allItems = response
             .publicServicesCategories
             .map { PublicServiceCategoryViewModel(model: $0, typeValidator: validatorTask) }
             .filter {
                 $0.publicServices.count > 1
                 || ($0.publicServices.count == 1
                     && $0.publicServices[0].isActive) }
+        addDocumentPhotoCheckIfNeeded(to: &allItems, validator: validatorTask)
         if allItems == model.allItems {
             return
         }
@@ -202,10 +207,10 @@ final class PublicServiceCategoriesListPresenter: NSObject, PublicServiceCategor
     }
     
     func getItems(hasChip: Bool) -> [PublicServiceCategoryViewModel] {
-        return model.visibleItems.filter({
-            $0.chips?.contains(where: {[weak model] in
-                $0.tab == model?.currentTab?.rawValue
-            }) == hasChip})
+        return model.visibleItems.filter { [weak model] viewModel in
+            let chipForTab = viewModel.chips?.contains(where: { $0.tab == model?.currentTab?.rawValue }) ?? false
+            return hasChip ? chipForTab : !chipForTab
+        }
     }
     
     func getNewsData() -> DSHalvedCardCarouselModel? {
@@ -243,11 +248,18 @@ final class PublicServiceCategoriesListPresenter: NSObject, PublicServiceCategor
                 rawValue: self.model.publicServiceTabsViewModel.items[tabIndex].id) ?? .defaultValue)
         }
         
-        if let currentTab = model.currentTab, responseTabs.first(where: { $0.code == currentTab }) != nil {
-            handleItems(by: currentTab)
-            return
+        let initialTab: PublicServiceTabType
+        if let currentTab = model.currentTab,
+           responseTabs.contains(where: { $0.code == currentTab }) {
+            initialTab = currentTab
+        } else if responseTabs.contains(where: { $0.code == .defaultValue }) {
+            initialTab = .defaultValue
+        } else if let first = responseTabs.first?.code {
+            initialTab = first
+        } else {
+            initialTab = .defaultValue
         }
-        handleItems(by: .defaultValue)
+        handleItems(by: initialTab)
     }
     
     private func handleItems(by tabType: PublicServiceTabType) {
@@ -264,5 +276,64 @@ private extension PublicServiceCategoriesListPresenter {
     enum Constants {
         static let newsAction = "news"
         static let allNews = "allNews"
+        static let documentPhotoCheckName = "Перевірка фото на документи"
+    }
+    
+    func addDocumentPhotoCheckIfNeeded(to items: inout [PublicServiceCategoryViewModel],
+                                       validator: @escaping PublicServiceCodeValidator) {
+        let code = PublicServiceType.documentPhotoCheck.rawValue
+        let isAlreadyPresent = items.contains(where: { viewModel in
+            viewModel.publicServices.contains(where: { $0.type == code })
+        })
+        
+        if isAlreadyPresent { return }
+        
+        let documentPhotoService = PublicServiceModel(
+            status: .active,
+            name: Constants.documentPhotoCheckName,
+            code: code,
+            badgeNumber: nil,
+            search: Constants.documentPhotoCheckName.lowercased(),
+            contextMenu: nil
+        )
+        
+        let category = PublicServiceCategory(
+            code: code,
+            icon: code,
+            name: Constants.documentPhotoCheckName,
+            status: .active,
+            visibleSearch: true,
+            tabCodes: [.citizen],
+            publicServices: [documentPhotoService],
+            chips: nil
+        )
+        
+        items.append(PublicServiceCategoryViewModel(model: category, typeValidator: validator))
+    }
+    
+    func makeLocalFallbackResponse() -> PublicServiceResponse {
+        let code = PublicServiceType.documentPhotoCheck.rawValue
+        let tab = PublicServiceTab(name: R.Strings.services_list_title.localized(), code: .citizen)
+        let service = PublicServiceModel(
+            status: .active,
+            name: Constants.documentPhotoCheckName,
+            code: code,
+            badgeNumber: nil,
+            search: Constants.documentPhotoCheckName.lowercased(),
+            contextMenu: nil
+        )
+        let category = PublicServiceCategory(
+            code: code,
+            icon: code,
+            name: Constants.documentPhotoCheckName,
+            status: .active,
+            visibleSearch: true,
+            tabCodes: [.citizen],
+            publicServices: [service],
+            chips: nil
+        )
+        return PublicServiceResponse(publicServicesCategories: [category],
+                                     tabs: [tab],
+                                     additionalElements: nil)
     }
 }
