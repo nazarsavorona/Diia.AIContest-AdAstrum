@@ -10,20 +10,6 @@ final class LiveCameraViewController: UIViewController {
     private var lastFrameSize: CGSize = CGSize(width: 2, height: 3)
     private var responseTimestamps: [CFTimeInterval] = []
     private let fpsWindow: CFTimeInterval = 2.0
-    private let throttleSlider: UISlider = {
-        let slider = UISlider()
-        slider.minimumValue = 0.05
-        slider.maximumValue = 1.0
-        slider.value = 0.35
-        return slider
-    }()
-    private let throttleLabel: UILabel = {
-        let label = UILabel()
-        label.font = FontBook.usualFont
-        label.textColor = .systemTeal
-        label.numberOfLines = 1
-        return label
-    }()
 
     private let statusLabel: UILabel = {
         let label = UILabel()
@@ -79,12 +65,8 @@ final class LiveCameraViewController: UIViewController {
         infoContainer.translatesAutoresizingMaskIntoConstraints = false
         statusLabel.translatesAutoresizingMaskIntoConstraints = false
         responseLabel.translatesAutoresizingMaskIntoConstraints = false
-        throttleLabel.translatesAutoresizingMaskIntoConstraints = false
-        throttleSlider.translatesAutoresizingMaskIntoConstraints = false
         view.addSubview(infoContainer)
         infoContainer.addSubview(statusLabel)
-        infoContainer.addSubview(throttleLabel)
-        infoContainer.addSubview(throttleSlider)
         infoContainer.addSubview(responseLabel)
 
         NSLayoutConstraint.activate([
@@ -101,24 +83,14 @@ final class LiveCameraViewController: UIViewController {
             statusLabel.trailingAnchor.constraint(equalTo: infoContainer.trailingAnchor, constant: -12),
             statusLabel.topAnchor.constraint(equalTo: infoContainer.topAnchor, constant: 10),
 
-            throttleLabel.leadingAnchor.constraint(equalTo: infoContainer.leadingAnchor, constant: 12),
-            throttleLabel.trailingAnchor.constraint(equalTo: infoContainer.trailingAnchor, constant: -12),
-            throttleLabel.topAnchor.constraint(equalTo: statusLabel.bottomAnchor, constant: 8),
-
-            throttleSlider.leadingAnchor.constraint(equalTo: infoContainer.leadingAnchor, constant: 12),
-            throttleSlider.trailingAnchor.constraint(equalTo: infoContainer.trailingAnchor, constant: -12),
-            throttleSlider.topAnchor.constraint(equalTo: throttleLabel.bottomAnchor, constant: 4),
-
             responseLabel.leadingAnchor.constraint(equalTo: infoContainer.leadingAnchor, constant: 12),
             responseLabel.trailingAnchor.constraint(equalTo: infoContainer.trailingAnchor, constant: -12),
-            responseLabel.topAnchor.constraint(equalTo: throttleSlider.bottomAnchor, constant: 8),
+            responseLabel.topAnchor.constraint(equalTo: statusLabel.bottomAnchor, constant: 8),
             responseLabel.bottomAnchor.constraint(equalTo: infoContainer.bottomAnchor, constant: -12)
         ])
         statusLabel.text = "Запит доступу до камери"
         responseLabel.textColor = .systemYellow
         responseLabel.text = "Надішліть кадр, щоб побачити відповіді сервера."
-        throttleSlider.addTarget(self, action: #selector(throttleChanged(_:)), for: .valueChanged)
-        updateThrottleLabel()
         overlayView.configure(landmarks: [],
                               imageSize: lastFrameSize,
                               connections: mediaPipeFullMeshConnections,
@@ -225,20 +197,6 @@ private extension LiveCameraViewController {
         let windowStart = latest - fpsWindow
         let framesInWindow = responseTimestamps.filter { $0 >= windowStart }.count
         return Double(framesInWindow) / fpsWindow
-    }
-
-    @objc func throttleChanged(_ sender: UISlider) {
-        let interval = TimeInterval(sender.value)
-        if let apiSource = landmarksSource as? ApiForwardingLandmarksSource {
-            apiSource.updateThrottleInterval(interval)
-        }
-        updateThrottleLabel()
-    }
-
-    func updateThrottleLabel() {
-        let interval = TimeInterval(throttleSlider.value)
-        let fpsCap = 1.0 / interval
-        throttleLabel.text = String(format: "Інтервал запиту: %.2fs (макс %.1f FPS)", interval, fpsCap)
     }
 }
 
