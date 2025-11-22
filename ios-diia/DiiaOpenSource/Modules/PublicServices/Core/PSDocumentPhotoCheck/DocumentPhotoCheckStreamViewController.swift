@@ -72,6 +72,7 @@ final class DocumentPhotoCheckStreamViewController: UIViewController, BaseView {
     private var isValidating = false
     private var lastValidationAt: CFTimeInterval = 0
     private let validationThrottle: CFTimeInterval = 0.6
+    private let frameScale: CGFloat = 1.0 / 1.5
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -92,6 +93,9 @@ final class DocumentPhotoCheckStreamViewController: UIViewController, BaseView {
         previewLayer?.frame = previewContainer.bounds
         overlayView.frame = previewContainer.bounds
         landmarksOverlay.frame = previewContainer.bounds
+        let frameRect = calculateFrameRect(in: previewContainer.bounds)
+        overlayView.frameRect = frameRect
+        landmarksOverlay.cropRect = frameRect
     }
     
     private func setupLayout() {
@@ -115,6 +119,8 @@ final class DocumentPhotoCheckStreamViewController: UIViewController, BaseView {
         if let toggle = landmarksToggleStack.arrangedSubviews.last as? UISwitch {
             toggle.addTarget(self, action: #selector(toggleLandmarks(_:)), for: .valueChanged)
         }
+        landmarksOverlay.showsReferenceFrame = false
+        landmarksOverlay.showsBoundingBox = false
         
         topView.setupTitle(title: "Фото для перевірки")
         topView.setupOnClose { [weak self] in
@@ -236,6 +242,27 @@ final class DocumentPhotoCheckStreamViewController: UIViewController, BaseView {
             landmarksOverlay.configure(landmarks: [], imageSize: lastFrameSize, connections: [])
         }
     }
+    
+    private func calculateFrameRect(in bounds: CGRect) -> CGRect {
+        var target = bounds.insetBy(dx: 16, dy: 16)
+        let targetAspect: CGFloat = 2.0 / 3.0
+        let currentAspect = target.width / target.height
+        if currentAspect > targetAspect {
+            let newWidth = target.height * targetAspect
+            target.origin.x += (target.width - newWidth) / 2
+            target.size.width = newWidth
+        } else {
+            let newHeight = target.width / targetAspect
+            target.origin.y += (target.height - newHeight) / 2
+            target.size.height = newHeight
+        }
+        let newWidth = target.width * frameScale
+        let newHeight = target.height * frameScale
+        target.origin.x += (target.width - newWidth) / 2
+        target.origin.y += (target.height - newHeight) / 2
+        target.size = CGSize(width: newWidth, height: newHeight)
+        return target
+    }
 }
 
 extension DocumentPhotoCheckStreamViewController: CameraCaptureServiceDelegate {
@@ -343,6 +370,7 @@ private final class PhotoCheckFrameView: UIView {
         case success
     }
     
+    var frameRect: CGRect?
     var state: State = .idle {
         didSet { setNeedsDisplay() }
     }
@@ -362,26 +390,7 @@ private final class PhotoCheckFrameView: UIView {
     override func draw(_ rect: CGRect) {
         let path = UIBezierPath()
         path.lineWidth = 4
-        // Compute target rect with 2:3 aspect ratio centered, scaled down
-        var target = rect.insetBy(dx: 16, dy: 16)
-        let targetAspect: CGFloat = 2.0 / 3.0
-        let currentAspect = target.width / target.height
-        if currentAspect > targetAspect {
-            let newWidth = target.height * targetAspect
-            target.origin.x += (target.width - newWidth) / 2
-            target.size.width = newWidth
-        } else {
-            let newHeight = target.width / targetAspect
-            target.origin.y += (target.height - newHeight) / 2
-            target.size.height = newHeight
-        }
-        // Scale down by factor to make frame smaller
-        let scale: CGFloat = 1.0 / 1.5
-        let newWidth = target.width * scale
-        let newHeight = target.height * scale
-        target.origin.x += (target.width - newWidth) / 2
-        target.origin.y += (target.height - newHeight) / 2
-        target.size = CGSize(width: newWidth, height: newHeight)
+        guard let target = frameRect ?? defaultFrame(in: rect) else { return }
         
         let corner: CGFloat = 24
         let color: UIColor = state == .success ? UIColor(red: 0.21, green: 0.73, blue: 0.36, alpha: 1) : UIColor(white: 0.9, alpha: 1)
@@ -401,5 +410,27 @@ private final class PhotoCheckFrameView: UIView {
         addCorner(target.maxX, target.maxY, -1, -1)
         
         path.stroke()
+    }
+    
+    private func defaultFrame(in rect: CGRect) -> CGRect? {
+        var target = rect.insetBy(dx: 16, dy: 16)
+        let targetAspect: CGFloat = 2.0 / 3.0
+        let currentAspect = target.width / target.height
+        if currentAspect > targetAspect {
+            let newWidth = target.height * targetAspect
+            target.origin.x += (target.width - newWidth) / 2
+            target.size.width = newWidth
+        } else {
+            let newHeight = target.width / targetAspect
+            target.origin.y += (target.height - newHeight) / 2
+            target.size.height = newHeight
+        }
+        let scale: CGFloat = 1.0 / 1.5
+        let newWidth = target.width * scale
+        let newHeight = target.height * scale
+        target.origin.x += (target.width - newWidth) / 2
+        target.origin.y += (target.height - newHeight) / 2
+        target.size = CGSize(width: newWidth, height: newHeight)
+        return target
     }
 }

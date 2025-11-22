@@ -205,6 +205,9 @@ final class LandmarksOverlayView: UIView {
     private var faceBoundingBox: CGRect?
     private let dotRadius: CGFloat = 2.5
     private let targetAspectRatio: CGFloat = 2.0 / 3.0
+    var showsReferenceFrame: Bool = true
+    var showsBoundingBox: Bool = true
+    var cropRect: CGRect?
 
     override init(frame: CGRect) {
         super.init(frame: frame)
@@ -245,6 +248,12 @@ final class LandmarksOverlayView: UIView {
         let drawHeight = originalImageSize.height * scale
         let originX = (bounds.width - drawWidth) / 2.0
         let originY = (bounds.height - drawHeight) / 2.0
+        
+        if let cropRect {
+            context.saveGState()
+            context.addRect(cropRect)
+            context.clip()
+        }
 
         var convertedPoints: [Int: CGPoint] = [:]
         for landmark in landmarks {
@@ -254,11 +263,13 @@ final class LandmarksOverlayView: UIView {
         }
 
         // Draw target aspect frame (matches crop)
-        context.setStrokeColor(UIColor.white.withAlphaComponent(0.9).cgColor)
-        context.setLineWidth(2.0)
-        context.stroke(CGRect(x: originX, y: originY, width: drawWidth, height: drawHeight))
+        if showsReferenceFrame {
+            context.setStrokeColor(UIColor.white.withAlphaComponent(0.9).cgColor)
+            context.setLineWidth(2.0)
+            context.stroke(CGRect(x: originX, y: originY, width: drawWidth, height: drawHeight))
+        }
 
-        if let box = faceBoundingBox {
+        if showsBoundingBox, let box = faceBoundingBox {
             context.setStrokeColor(UIColor.systemOrange.withAlphaComponent(0.8).cgColor)
             context.setLineWidth(2)
             let rect = CGRect(x: originX + box.origin.x * scale,
@@ -289,6 +300,10 @@ final class LandmarksOverlayView: UIView {
                               width: dotRadius * 2,
                               height: dotRadius * 2)
             context.fillEllipse(in: rect)
+        }
+        
+        if cropRect != nil {
+            context.restoreGState()
         }
     }
 }
