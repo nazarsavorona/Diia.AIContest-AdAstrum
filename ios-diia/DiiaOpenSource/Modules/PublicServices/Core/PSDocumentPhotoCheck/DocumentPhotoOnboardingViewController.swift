@@ -230,7 +230,7 @@ private extension DocumentPhotoOnboardingViewController {
     }
     
     @objc func openCameraTapped() {
-        AppRouter.instance.open(module: LiveCameraModule(), needPincode: false)
+        AppRouter.instance.open(module: DocumentPhotoCheckStreamModule(), needPincode: false)
     }
     
     @objc func openGalleryTapped() {

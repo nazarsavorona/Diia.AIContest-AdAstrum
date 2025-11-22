@@ -186,6 +186,8 @@
 		7B65C5E32B03960F0018D510 /* PSCriminalRecordExtractRoute.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7B65C5E22B03960F0018D510 /* PSCriminalRecordExtractRoute.swift */; };
 		3388EAD9965A4284B906F67C /* DocumentPhotoOnboardingViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3388EAD9965A4284B906F67B /* DocumentPhotoOnboardingViewController.swift */; };
 		A464F8C752804491884BDE0D /* PSDocumentPhotoCheckRoute.swift in Sources */ = {isa = PBXBuildFile; fileRef = A464F8C752804491884BDE0C /* PSDocumentPhotoCheckRoute.swift */; };
+		B0A0F1A62F0EAAA100000003 /* DocumentPhotoCheckStreamViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = B0A0F1A52F0EAAA100000001 /* DocumentPhotoCheckStreamViewController.swift */; };
+		B0A0F1A62F0EAAA100000004 /* DocumentPhotoCheckStreamModule.swift in Sources */ = {isa = PBXBuildFile; fileRef = B0A0F1A52F0EAAA100000002 /* DocumentPhotoCheckStreamModule.swift */; };
 		7B6728352AC1A0620042A113 /* JSONDecoderConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7B6728332AC1A0620042A113 /* JSONDecoderConfig.swift */; };
 		7B7693C62B7AE0380007A89F /* DSImageNameResolver.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7B7693C52B7AE0380007A89F /* DSImageNameResolver.swift */; };
 		7B7693C92B7AE63E0007A89F /* SharingDocsAPI.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7B7693C72B7AE63D0007A89F /* SharingDocsAPI.swift */; };
@@ -412,6 +414,8 @@
 		7B65C5E22B03960F0018D510 /* PSCriminalRecordExtractRoute.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PSCriminalRecordExtractRoute.swift; sourceTree = "<group>"; };
 		3388EAD9965A4284B906F67B /* DocumentPhotoOnboardingViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DocumentPhotoOnboardingViewController.swift; sourceTree = "<group>"; };
 		A464F8C752804491884BDE0C /* PSDocumentPhotoCheckRoute.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PSDocumentPhotoCheckRoute.swift; sourceTree = "<group>"; };
+		B0A0F1A52F0EAAA100000001 /* DocumentPhotoCheckStreamViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DocumentPhotoCheckStreamViewController.swift; sourceTree = "<group>"; };
+		B0A0F1A52F0EAAA100000002 /* DocumentPhotoCheckStreamModule.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DocumentPhotoCheckStreamModule.swift; sourceTree = "<group>"; };
 		7B6728332AC1A0620042A113 /* JSONDecoderConfig.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = JSONDecoderConfig.swift; sourceTree = "<group>"; };
 		7B7693C52B7AE0380007A89F /* DSImageNameResolver.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DSImageNameResolver.swift; sourceTree = "<group>"; };
 		7B7693C72B7AE63D0007A89F /* SharingDocsAPI.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SharingDocsAPI.swift; sourceTree = "<group>"; };
@@ -1276,6 +1280,8 @@
 			isa = PBXGroup;
 			children = (
 				3388EAD9965A4284B906F67B /* DocumentPhotoOnboardingViewController.swift */,
+				B0A0F1A52F0EAAA100000001 /* DocumentPhotoCheckStreamViewController.swift */,
+				B0A0F1A52F0EAAA100000002 /* DocumentPhotoCheckStreamModule.swift */,
 				A464F8C752804491884BDE0C /* PSDocumentPhotoCheckRoute.swift */,
 			);
 			path = PSDocumentPhotoCheck;
@@ -1702,6 +1708,8 @@
 				5E6B4CF5AEE94AF1AF5A1234 /* LandmarksSources.swift in Sources */,
 				1075FFE347F4426FB465A640 /* LiveCameraModule.swift in Sources */,
 				B0AB8B0E2A504FDEBA1ED136 /* LiveCameraViewController.swift in Sources */,
+				B0A0F1A62F0EAAA100000003 /* DocumentPhotoCheckStreamViewController.swift in Sources */,
+				B0A0F1A62F0EAAA100000004 /* DocumentPhotoCheckStreamModule.swift in Sources */,
 				7B7693C92B7AE63E0007A89F /* SharingDocsAPI.swift in Sources */,
 				7BE199412B16DB2D008C9FAC /* DocumentReorderingService.swift in Sources */,
 				3329AF7A2B2A1F1F004B8517 /* EnterPinCodeAuthDelegate.swift in Sources */,
