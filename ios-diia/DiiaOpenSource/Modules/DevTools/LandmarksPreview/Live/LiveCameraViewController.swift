@@ -10,6 +10,8 @@ final class LiveCameraViewController: UIViewController {
     private var lastFrameSize: CGSize = CGSize(width: 2, height: 3)
     private var responseTimestamps: [CFTimeInterval] = []
     private let fpsWindow: CFTimeInterval = 2.0
+    private var lastCapturedImage: UIImage?
+    private var hasNavigatedToSuccess = false
 
     private let statusLabel: UILabel = {
         let label = UILabel()
@@ -45,6 +47,11 @@ final class LiveCameraViewController: UIViewController {
         cameraService.configure()
     }
 
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        hasNavigatedToSuccess = false
+    }
+    
     override func viewWillDisappear(_ animated: Bool) {
         super.viewWillDisappear(animated)
         cameraService.stop()
@@ -140,6 +147,11 @@ final class LiveCameraViewController: UIViewController {
 
 extension LiveCameraViewController: CameraCaptureServiceDelegate {
     func cameraCaptureService(_ service: CameraCaptureService, didOutput sampleBuffer: CMSampleBuffer, orientation: CGImagePropertyOrientation) {
+        // Capture image from sample buffer
+        if let image = imageFromSampleBuffer(sampleBuffer) {
+            lastCapturedImage = image
+        }
+        
         landmarksSource.process(sampleBuffer: sampleBuffer, orientation: orientation) { [weak self] result in
             guard let self else { return }
             switch result {
@@ -151,6 +163,12 @@ extension LiveCameraViewController: CameraCaptureServiceDelegate {
                                            connections: mediaPipeFullMeshConnections,
                                            faceBoundingBox: detection.faceBoundingBox)
                 self.updateResponse(status: detection.status, errors: detection.errors, latencyMs: detection.latencyMs)
+                
+                // Navigate to success screen if validation passed
+                if detection.status.uppercased() == "SUCCESS" && !self.hasNavigatedToSuccess {
+                    self.hasNavigatedToSuccess = true
+                    self.navigateToSuccessScreen()
+                }
             case .failure(let error):
                 self.recordResponseTick()
                 self.overlayView.configure(landmarks: [],
@@ -215,5 +233,31 @@ private extension LiveCameraViewController {
             print("Failed to load RocketSim Connect linker: \(error)")
         }
         #endif
+    }
+    
+    func imageFromSampleBuffer(_ sampleBuffer: CMSampleBuffer) -> UIImage? {
+        guard let imageBuffer = CMSampleBufferGetImageBuffer(sampleBuffer) else { return nil }
+        
+        let ciImage = CIImage(cvPixelBuffer: imageBuffer)
+        let context = CIContext()
+        
+        guard let cgImage = context.createCGImage(ciImage, from: ciImage.extent) else { return nil }
+        return UIImage(cgImage: cgImage, scale: 1.0, orientation: .right)
+    }
+    
+    func navigateToSuccessScreen() {
+        DispatchQueue.main.async { [weak self] in
+            guard let self = self, let capturedImage = self.lastCapturedImage else { return }
+            
+            // Stop camera before navigating
+            self.cameraService.stop()
+            self.landmarksSource.stop()
+            
+            let successVC = PhotoSuccessViewController(photoImage: capturedImage) { [weak self] in
+                // On dismiss, pop back to previous screen
+                self?.navigationController?.popViewController(animated: true)
+            }
+            self.navigationController?.pushViewController(successVC, animated: true)
+        }
     }
 }
