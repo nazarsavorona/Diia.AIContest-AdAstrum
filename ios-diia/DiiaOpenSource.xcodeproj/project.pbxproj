@@ -1961,7 +1961,7 @@
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 2050;
-				DEVELOPMENT_TEAM = 5P5UY54NMK;
+				DEVELOPMENT_TEAM = Z7LK8H8F87;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = DiiaOpenSource/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = DiiaOS;
@@ -1979,7 +1979,7 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 4.20.0;
-				PRODUCT_BUNDLE_IDENTIFIER = diia;
+				PRODUCT_BUNDLE_IDENTIFIER = com.sofiiatriasko.diia;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
@@ -1999,7 +1999,7 @@
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 2050;
-				DEVELOPMENT_TEAM = 5P5UY54NMK;
+				DEVELOPMENT_TEAM = Z7LK8H8F87;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = DiiaOpenSource/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = DiiaOS;
@@ -2017,7 +2017,7 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 4.20.0;
-				PRODUCT_BUNDLE_IDENTIFIER = diia;
+				PRODUCT_BUNDLE_IDENTIFIER = com.sofiiatriasko.diia;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
