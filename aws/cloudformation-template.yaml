@@ -500,8 +500,11 @@ Resources:
           TargetGroupArn: !Ref TargetGroup
       HealthCheckGracePeriodSeconds: 120
       DeploymentConfiguration:
-        MaximumPercent: 200
+        MaximumPercent: 100
         MinimumHealthyPercent: 0
+        DeploymentCircuitBreaker:
+          Enable: true
+          Rollback: true
 
   # ==================== CloudFront Distribution ====================
 
