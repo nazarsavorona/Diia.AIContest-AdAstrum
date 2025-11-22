@@ -2,32 +2,26 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-	<key>CFBundleIdentifier</key>
-	<string>$(APP_BUNDLE_ID)</string>
-	<key>CFBundleName</key>
-	<string>$(APP_NAME)</string>
 	<key>ApiBaseURL</key>
 	<string>$(API_BASE_URL)</string>
 	<key>Configuration</key>
 	<string>DiiaStage</string>
 	<key>IsInDebug</key>
 	<string>$(IS_IN_DEBUG)</string>
-	<key>Scheme</key>
-	<string>$(SCHEME)</string>
-	<key>NSCameraUsageDescription</key>
-	<string>Camera access is needed to preview live video for landmark detection and QR scanning.</string>
-	<key>NSFaceIDUsageDescription</key>
-	<string>Enabling Face ID allows you quick and secure access to your account</string>
-	<key>UIApplicationSceneManifest</key>
-	<dict>
-		<key>UIApplicationSupportsMultipleScenes</key>
-		<false/>
-	</dict>
 	<key>LSApplicationQueriesSchemes</key>
 	<array>
 		<string>fb</string>
 		<string>viber</string>
 		<string>tg</string>
 	</array>
+	<key>NSCameraUsageDescription</key>
+	<string>This app needs camera access to scan QR codes and capture photos for document verification.</string>
+	<key>Scheme</key>
+	<string>$(SCHEME)</string>
+	<key>UIApplicationSceneManifest</key>
+	<dict>
+		<key>UIApplicationSupportsMultipleScenes</key>
+		<false/>
+	</dict>
 </dict>
 </plist>

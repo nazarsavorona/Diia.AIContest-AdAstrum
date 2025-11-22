@@ -174,9 +174,12 @@ final class ApiForwardingLandmarksSource: FaceLandmarksSource {
 
     private func encode(sampleBuffer: CMSampleBuffer, orientation: CGImagePropertyOrientation) -> (base64: String, size: CGSize)? {
         guard let pixelBuffer = CMSampleBufferGetImageBuffer(sampleBuffer) else { return nil }
-        let oriented = CIImage(cvPixelBuffer: pixelBuffer).oriented(orientation)
-        let cropped = centerCrop(image: oriented, targetAspectRatio: 2.0 / 3.0)
-        guard let cgImage = ciContext.createCGImage(cropped, from: cropped.extent.integral) else { return nil }
+        let oriented = CIImage(cvPixelBuffer: pixelBuffer).oriented(.up)
+        
+        let cropTarget: CIImage
+        cropTarget = centerCrop(image: oriented, targetAspectRatio: 2.0 / 3.0)
+
+        guard let cgImage = ciContext.createCGImage(cropTarget, from: cropTarget.extent.integral) else { return nil }
 
         let imageSize = CGSize(width: cgImage.width, height: cgImage.height)
         let uiImage = UIImage(cgImage: cgImage, scale: 1, orientation: .up)
@@ -224,23 +227,6 @@ final class ApiForwardingLandmarksSource: FaceLandmarksSource {
         rect = rect.integral
         return image.cropped(to: rect)
     }
-}
-
-final class MediapipeLandmarksSource: FaceLandmarksSource {
-    #if canImport(MediaPipeTasksVision)
-    // Implementation should wrap MediaPipe Tasks Vision FaceLandmarker.
-    #endif
-
-    func process(sampleBuffer: CMSampleBuffer, orientation: CGImagePropertyOrientation, completion: @escaping (Result<LandmarksDetection, Error>) -> Void) {
-        #if canImport(MediaPipeTasksVision)
-        // TODO: plug MediaPipe FaceLandmarker here once framework is added.
-        completion(.failure(LandmarksSourceError.notImplemented))
-        #else
-        completion(.failure(LandmarksSourceError.mediapipeUnavailable))
-        #endif
-    }
-
-    func stop() {}
 }
 
 enum LandmarksSourceError: LocalizedError {

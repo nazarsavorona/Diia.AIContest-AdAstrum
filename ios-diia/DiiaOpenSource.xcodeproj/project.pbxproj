@@ -7,6 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		1075FFE347F4426FB465A640 /* LiveCameraModule.swift in Sources */ = {isa = PBXBuildFile; fileRef = 83DF7BDDA2E54098A774DA5B /* LiveCameraModule.swift */; };
+		1D88C0D981C448EE9ADC3B1C /* LandmarksPreviewPresenter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 40EDF15F400D468ABAB8E83A /* LandmarksPreviewPresenter.swift */; };
 		332236042B87927800E6B7AF /* README.md in Resources */ = {isa = PBXBuildFile; fileRef = 332236032B87927700E6B7AF /* README.md */; };
 		3329AF692B29F928004B8517 /* AuthorizationContext+Extension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3329AF682B29F928004B8517 /* AuthorizationContext+Extension.swift */; };
 		3329AF6B2B29F944004B8517 /* UserAuthorizationErrorRouter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3329AF6A2B29F944004B8517 /* UserAuthorizationErrorRouter.swift */; };
@@ -33,14 +35,11 @@
 		33B035332B29CF1700374227 /* AuthorizationStorage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 33B035322B29CF1700374227 /* AuthorizationStorage.swift */; };
 		33B035352B29CF8900374227 /* Dictionary+UserIdentifyHandlers.swift in Sources */ = {isa = PBXBuildFile; fileRef = 33B035342B29CF8900374227 /* Dictionary+UserIdentifyHandlers.swift */; };
 		33C550412B48B6A200E100CD /* Lottie in Frameworks */ = {isa = PBXBuildFile; productRef = 33C550402B48B6A200E100CD /* Lottie */; };
+		3AE7FCE16CDC451B8C8B541B /* Landmarks in Resources */ = {isa = PBXBuildFile; fileRef = 02608E996C3544C8915B2800 /* Landmarks */; };
 		42F49A012DCC945600B8D36F /* ConstructorMockV2Module.swift in Sources */ = {isa = PBXBuildFile; fileRef = 42F499F22DCC945600B8D36F /* ConstructorMockV2Module.swift */; };
 		42F49A022DCC945600B8D36F /* ConstructorMockV2Presenter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 42F499F32DCC945600B8D36F /* ConstructorMockV2Presenter.swift */; };
 		42F49A0C2DCC94C800B8D36F /* ContextMenuConfigurable.swift in Sources */ = {isa = PBXBuildFile; fileRef = 42F49A0B2DCC94C800B8D36F /* ContextMenuConfigurable.swift */; };
 		42F49A0E2DCC959200B8D36F /* String+Ext.swift in Sources */ = {isa = PBXBuildFile; fileRef = 42F49A0D2DCC959200B8D36F /* String+Ext.swift */; };
-		D3222A39A6C04280A1F34361 /* LandmarksPreviewModule.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A08D022727E4CE8A130BD7C /* LandmarksPreviewModule.swift */; };
-		1D88C0D981C448EE9ADC3B1C /* LandmarksPreviewPresenter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 40EDF15F400D468ABAB8E83A /* LandmarksPreviewPresenter.swift */; };
-		971FC91F53454F5E85D97069 /* LandmarksPreviewViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = E8F7D7AB367E4A8FBF8C13E4 /* LandmarksPreviewViewController.swift */; };
-		826C4BDC94BC4288836015D1 /* MediaPipeConnections.swift in Sources */ = {isa = PBXBuildFile; fileRef = F7B9E0E288974D6B8195C311 /* MediaPipeConnections.swift */; };
 		42F922AF29FBDC820072DDC1 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 42F922AD29FBDC820072DDC1 /* LaunchScreen.storyboard */; };
 		42F922C229FBF4C10072DDC1 /* AppConfigurator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 42F922BD29FBF4C10072DDC1 /* AppConfigurator.swift */; };
 		42F922C329FBF4C10072DDC1 /* AppConstants.swift in Sources */ = {isa = PBXBuildFile; fileRef = 42F922BE29FBF4C10072DDC1 /* AppConstants.swift */; };
@@ -175,6 +174,7 @@
 		4A63C82F2E9D21F60019BE7E /* PublicServiceOpenerProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4A63C7E22E9D21F60019BE7E /* PublicServiceOpenerProtocol.swift */; };
 		4A63C8302E9D21F60019BE7E /* PublicServiceSearchPresenter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4A63C8072E9D21F60019BE7E /* PublicServiceSearchPresenter.swift */; };
 		4A63C8312E9D21F60019BE7E /* PublicServiceOpener.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4A63C7E92E9D21F60019BE7E /* PublicServiceOpener.swift */; };
+		5E6B4CF5AEE94AF1AF5A1234 /* LandmarksSources.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9A27C30BDB0E4B3F9360E722 /* LandmarksSources.swift */; };
 		7B0AACE62B8B86E1007E00B8 /* FirebaseAnalytics in Frameworks */ = {isa = PBXBuildFile; productRef = 7B0AACE52B8B86E1007E00B8 /* FirebaseAnalytics */; };
 		7B0AACE82B8B86EA007E00B8 /* FirebaseCrashlytics in Frameworks */ = {isa = PBXBuildFile; productRef = 7B0AACE72B8B86EA007E00B8 /* FirebaseCrashlytics */; };
 		7B0AACF12B8B8D68007E00B8 /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 7B0AACF02B8B8D68007E00B8 /* GoogleService-Info.plist */; };
@@ -204,11 +204,6 @@
 		7BD601282AB093F800DCA74D /* HTTPStatusCodeAdapter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7BD601272AB093F800DCA74D /* HTTPStatusCodeAdapter.swift */; };
 		7BD75AD92B678129000D54CA /* background_gradient.json in Resources */ = {isa = PBXBuildFile; fileRef = 7BD75AD82B678129000D54CA /* background_gradient.json */; };
 		7BD75ADB2B679FCB000D54CA /* splash_cropped.json in Resources */ = {isa = PBXBuildFile; fileRef = 7BD75ADA2B679FCB000D54CA /* splash_cropped.json */; };
-		3AE7FCE16CDC451B8C8B541B /* Landmarks in Resources */ = {isa = PBXBuildFile; fileRef = 02608E996C3544C8915B2800 /* Landmarks */; };
-		C08AFE0AAA6D40C88E355C58 /* CameraCaptureService.swift in Sources */ = {isa = PBXBuildFile; fileRef = C557B90ABF3E451A94D79E38 /* CameraCaptureService.swift */; };
-		5E6B4CF5AEE94AF1AF5A1234 /* LandmarksSources.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9A27C30BDB0E4B3F9360E722 /* LandmarksSources.swift */; };
-		1075FFE347F4426FB465A640 /* LiveCameraModule.swift in Sources */ = {isa = PBXBuildFile; fileRef = 83DF7BDDA2E54098A774DA5B /* LiveCameraModule.swift */; };
-		B0AB8B0E2A504FDEBA1ED136 /* LiveCameraViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB99F4E0FF254E91AD84CE91 /* LiveCameraViewController.swift */; };
 		7BE198B42B148389008C9FAC /* PublicServiceCoreNetworkContext+Extension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7BE198B32B148389008C9FAC /* PublicServiceCoreNetworkContext+Extension.swift */; };
 		7BE198EA2B14FBDF008C9FAC /* TemplateActionFactory.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7BE198E92B14FBDF008C9FAC /* TemplateActionFactory.swift */; };
 		7BE198F22B150D1F008C9FAC /* ContextMenuProvidingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7BE198F12B150D1F008C9FAC /* ContextMenuProvidingView.swift */; };
@@ -237,13 +232,20 @@
 		7BE199562B16E753008C9FAC /* LocalizationHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7BE199552B16E753008C9FAC /* LocalizationHelper.swift */; };
 		7BE199642B17C230008C9FAC /* FaqOpener.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7BE199632B17C230008C9FAC /* FaqOpener.swift */; };
 		7BE199672B17C319008C9FAC /* DriverReplacementStubModule.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7BE199662B17C319008C9FAC /* DriverReplacementStubModule.swift */; };
+		826C4BDC94BC4288836015D1 /* MediaPipeConnections.swift in Sources */ = {isa = PBXBuildFile; fileRef = F7B9E0E288974D6B8195C311 /* MediaPipeConnections.swift */; };
 		9487B53F2B76594800571A1D /* Alamofire in Frameworks */ = {isa = PBXBuildFile; productRef = 9487B53E2B76594800571A1D /* Alamofire */; };
 		9487B5422B765B8600571A1D /* ReactiveKit in Frameworks */ = {isa = PBXBuildFile; productRef = 9487B5412B765B8600571A1D /* ReactiveKit */; };
+		971FC91F53454F5E85D97069 /* LandmarksPreviewViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = E8F7D7AB367E4A8FBF8C13E4 /* LandmarksPreviewViewController.swift */; };
+		B0AB8B0E2A504FDEBA1ED136 /* LiveCameraViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB99F4E0FF254E91AD84CE91 /* LiveCameraViewController.swift */; };
+		C08AFE0AAA6D40C88E355C58 /* CameraCaptureService.swift in Sources */ = {isa = PBXBuildFile; fileRef = C557B90ABF3E451A94D79E38 /* CameraCaptureService.swift */; };
 		CB4209042E9D24EE00266703 /* Collections in Frameworks */ = {isa = PBXBuildFile; productRef = CB4209032E9D24EE00266703 /* Collections */; };
 		CB42090B2E9D272C00266703 /* LinkResponse.swift in Sources */ = {isa = PBXBuildFile; fileRef = CB42090A2E9D272C00266703 /* LinkResponse.swift */; };
+		D3222A39A6C04280A1F34361 /* LandmarksPreviewModule.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A08D022727E4CE8A130BD7C /* LandmarksPreviewModule.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		02608E996C3544C8915B2800 /* Landmarks */ = {isa = PBXFileReference; lastKnownFileType = folder; path = Landmarks; sourceTree = "<group>"; };
+		0A08D022727E4CE8A130BD7C /* LandmarksPreviewModule.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LandmarksPreviewModule.swift; sourceTree = "<group>"; };
 		332236032B87927700E6B7AF /* README.md */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
 		3329AF682B29F928004B8517 /* AuthorizationContext+Extension.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "AuthorizationContext+Extension.swift"; sourceTree = "<group>"; };
 		3329AF6A2B29F944004B8517 /* UserAuthorizationErrorRouter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserAuthorizationErrorRouter.swift; sourceTree = "<group>"; };
@@ -258,16 +260,9 @@
 		33B035302B29CAE600374227 /* BankIDIdentifyTask.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = BankIDIdentifyTask.swift; sourceTree = "<group>"; };
 		33B035322B29CF1700374227 /* AuthorizationStorage.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AuthorizationStorage.swift; sourceTree = "<group>"; };
 		33B035342B29CF8900374227 /* Dictionary+UserIdentifyHandlers.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "Dictionary+UserIdentifyHandlers.swift"; sourceTree = "<group>"; };
+		40EDF15F400D468ABAB8E83A /* LandmarksPreviewPresenter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LandmarksPreviewPresenter.swift; sourceTree = "<group>"; };
 		42F499F22DCC945600B8D36F /* ConstructorMockV2Module.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ConstructorMockV2Module.swift; sourceTree = "<group>"; };
 		42F499F32DCC945600B8D36F /* ConstructorMockV2Presenter.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ConstructorMockV2Presenter.swift; sourceTree = "<group>"; };
-		0A08D022727E4CE8A130BD7C /* LandmarksPreviewModule.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LandmarksPreviewModule.swift; sourceTree = "<group>"; };
-		40EDF15F400D468ABAB8E83A /* LandmarksPreviewPresenter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LandmarksPreviewPresenter.swift; sourceTree = "<group>"; };
-		E8F7D7AB367E4A8FBF8C13E4 /* LandmarksPreviewViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LandmarksPreviewViewController.swift; sourceTree = "<group>"; };
-		F7B9E0E288974D6B8195C311 /* MediaPipeConnections.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MediaPipeConnections.swift; sourceTree = "<group>"; };
-		C557B90ABF3E451A94D79E38 /* CameraCaptureService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraCaptureService.swift; sourceTree = "<group>"; };
-		9A27C30BDB0E4B3F9360E722 /* LandmarksSources.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LandmarksSources.swift; sourceTree = "<group>"; };
-		83DF7BDDA2E54098A774DA5B /* LiveCameraModule.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LiveCameraModule.swift; sourceTree = "<group>"; };
-		BB99F4E0FF254E91AD84CE91 /* LiveCameraViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LiveCameraViewController.swift; sourceTree = "<group>"; };
 		42F49A0B2DCC94C800B8D36F /* ContextMenuConfigurable.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ContextMenuConfigurable.swift; sourceTree = "<group>"; };
 		42F49A0D2DCC959200B8D36F /* String+Ext.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "String+Ext.swift"; sourceTree = "<group>"; };
 		42F9229F29FBDC820072DDC1 /* DiiaOpenSource.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = DiiaOpenSource.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -433,7 +428,6 @@
 		7BD601272AB093F800DCA74D /* HTTPStatusCodeAdapter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HTTPStatusCodeAdapter.swift; sourceTree = "<group>"; };
 		7BD75AD82B678129000D54CA /* background_gradient.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = background_gradient.json; sourceTree = "<group>"; };
 		7BD75ADA2B679FCB000D54CA /* splash_cropped.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = splash_cropped.json; sourceTree = "<group>"; };
-		02608E996C3544C8915B2800 /* Landmarks */ = {isa = PBXFileReference; lastKnownFileType = folder; path = Landmarks; sourceTree = "<group>"; };
 		7BE198B32B148389008C9FAC /* PublicServiceCoreNetworkContext+Extension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "PublicServiceCoreNetworkContext+Extension.swift"; sourceTree = "<group>"; };
 		7BE198E92B14FBDF008C9FAC /* TemplateActionFactory.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = TemplateActionFactory.swift; sourceTree = "<group>"; };
 		7BE198F12B150D1F008C9FAC /* ContextMenuProvidingView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ContextMenuProvidingView.swift; sourceTree = "<group>"; };
@@ -462,7 +456,13 @@
 		7BE199552B16E753008C9FAC /* LocalizationHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalizationHelper.swift; sourceTree = "<group>"; };
 		7BE199632B17C230008C9FAC /* FaqOpener.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FaqOpener.swift; sourceTree = "<group>"; };
 		7BE199662B17C319008C9FAC /* DriverReplacementStubModule.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DriverReplacementStubModule.swift; sourceTree = "<group>"; };
+		83DF7BDDA2E54098A774DA5B /* LiveCameraModule.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LiveCameraModule.swift; sourceTree = "<group>"; };
+		9A27C30BDB0E4B3F9360E722 /* LandmarksSources.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LandmarksSources.swift; sourceTree = "<group>"; };
+		BB99F4E0FF254E91AD84CE91 /* LiveCameraViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LiveCameraViewController.swift; sourceTree = "<group>"; };
+		C557B90ABF3E451A94D79E38 /* CameraCaptureService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraCaptureService.swift; sourceTree = "<group>"; };
 		CB42090A2E9D272C00266703 /* LinkResponse.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LinkResponse.swift; sourceTree = "<group>"; };
+		E8F7D7AB367E4A8FBF8C13E4 /* LandmarksPreviewViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LandmarksPreviewViewController.swift; sourceTree = "<group>"; };
+		F7B9E0E288974D6B8195C311 /* MediaPipeConnections.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MediaPipeConnections.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -494,6 +494,17 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		001F7337783640FAB9F422DA /* Live */ = {
+			isa = PBXGroup;
+			children = (
+				C557B90ABF3E451A94D79E38 /* CameraCaptureService.swift */,
+				9A27C30BDB0E4B3F9360E722 /* LandmarksSources.swift */,
+				83DF7BDDA2E54098A774DA5B /* LiveCameraModule.swift */,
+				BB99F4E0FF254E91AD84CE91 /* LiveCameraViewController.swift */,
+			);
+			path = Live;
+			sourceTree = "<group>";
+		};
 		33B0352F2B29CADA00374227 /* Core */ = {
 			isa = PBXGroup;
 			children = (
@@ -554,29 +565,6 @@
 				FE6C445788AE43D1BC6D0B5C /* LandmarksPreview */,
 			);
 			path = DevTools;
-			sourceTree = "<group>";
-		};
-		FE6C445788AE43D1BC6D0B5C /* LandmarksPreview */ = {
-			isa = PBXGroup;
-			children = (
-				0A08D022727E4CE8A130BD7C /* LandmarksPreviewModule.swift */,
-				40EDF15F400D468ABAB8E83A /* LandmarksPreviewPresenter.swift */,
-				E8F7D7AB367E4A8FBF8C13E4 /* LandmarksPreviewViewController.swift */,
-				F7B9E0E288974D6B8195C311 /* MediaPipeConnections.swift */,
-				001F7337783640FAB9F422DA /* Live */,
-			);
-			path = LandmarksPreview;
-			sourceTree = "<group>";
-		};
-		001F7337783640FAB9F422DA /* Live */ = {
-			isa = PBXGroup;
-			children = (
-				C557B90ABF3E451A94D79E38 /* CameraCaptureService.swift */,
-				9A27C30BDB0E4B3F9360E722 /* LandmarksSources.swift */,
-				83DF7BDDA2E54098A774DA5B /* LiveCameraModule.swift */,
-				BB99F4E0FF254E91AD84CE91 /* LiveCameraViewController.swift */,
-			);
-			path = Live;
 			sourceTree = "<group>";
 		};
 		42F9229629FBDC820072DDC1 = {
@@ -1479,6 +1467,18 @@
 			path = Models;
 			sourceTree = "<group>";
 		};
+		FE6C445788AE43D1BC6D0B5C /* LandmarksPreview */ = {
+			isa = PBXGroup;
+			children = (
+				0A08D022727E4CE8A130BD7C /* LandmarksPreviewModule.swift */,
+				40EDF15F400D468ABAB8E83A /* LandmarksPreviewPresenter.swift */,
+				E8F7D7AB367E4A8FBF8C13E4 /* LandmarksPreviewViewController.swift */,
+				F7B9E0E288974D6B8195C311 /* MediaPipeConnections.swift */,
+				001F7337783640FAB9F422DA /* Live */,
+			);
+			path = LandmarksPreview;
+			sourceTree = "<group>";
+		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
@@ -1958,13 +1958,16 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
-				CODE_SIGN_STYLE = Manual;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 2050;
-				DEVELOPMENT_TEAM = "";
+				DEVELOPMENT_TEAM = Z7LK8H8F87;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = DiiaOpenSource/Info.plist;
-				INFOPLIST_KEY_CFBundleDisplayName = "${APP_NAME}";
+				INFOPLIST_KEY_CFBundleDisplayName = DiiaOS;
 				INFOPLIST_KEY_LSApplicationCategoryType = "";
+				INFOPLIST_KEY_NSCameraUsageDescription = "Camera access is needed to preview live video for landmark detection and QR scanning.";
+				INFOPLIST_KEY_NSFaceIDUsageDescription = "Enabling Face ID allows you quick and secure access to your account";
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
@@ -1976,7 +1979,7 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 4.20.0;
-				PRODUCT_BUNDLE_IDENTIFIER = ua.gov.diia.opensource.app;
+				PRODUCT_BUNDLE_IDENTIFIER = com.yourname.diiaopensource;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
@@ -1993,13 +1996,16 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
-				CODE_SIGN_STYLE = Manual;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 2050;
-				DEVELOPMENT_TEAM = "";
+				DEVELOPMENT_TEAM = Z7LK8H8F87;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = DiiaOpenSource/Info.plist;
-				INFOPLIST_KEY_CFBundleDisplayName = "${APP_NAME}";
+				INFOPLIST_KEY_CFBundleDisplayName = DiiaOS;
 				INFOPLIST_KEY_LSApplicationCategoryType = "";
+				INFOPLIST_KEY_NSCameraUsageDescription = "Camera access is needed to preview live video for landmark detection and QR scanning.";
+				INFOPLIST_KEY_NSFaceIDUsageDescription = "Enabling Face ID allows you quick and secure access to your account";
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
@@ -2011,7 +2017,7 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 4.20.0;
-				PRODUCT_BUNDLE_IDENTIFIER = ua.gov.diia.opensource.app;
+				PRODUCT_BUNDLE_IDENTIFIER = com.yourname.diiaopensource;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
