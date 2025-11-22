@@ -201,7 +201,9 @@ final class LandmarksOverlayView: UIView {
     private var landmarks: [LandmarkPoint] = []
     private var connections: [(Int, Int)] = []
     private var originalImageSize: CGSize = .zero
+    private var faceBoundingBox: CGRect?
     private let dotRadius: CGFloat = 2.5
+    private let targetAspectRatio: CGFloat = 2.0 / 3.0
 
     override init(frame: CGRect) {
         super.init(frame: frame)
@@ -215,10 +217,11 @@ final class LandmarksOverlayView: UIView {
         backgroundColor = .clear
     }
 
-    func configure(landmarks: [LandmarkPoint], imageSize: CGSize, connections: [(Int, Int)]) {
+    func configure(landmarks: [LandmarkPoint], imageSize: CGSize, connections: [(Int, Int)], faceBoundingBox: CGRect? = nil) {
         self.landmarks = landmarks
         self.originalImageSize = imageSize
         self.connections = connections
+        self.faceBoundingBox = faceBoundingBox
         setNeedsDisplay()
     }
 
@@ -249,17 +252,34 @@ final class LandmarksOverlayView: UIView {
             convertedPoints[landmark.index] = CGPoint(x: x, y: y)
         }
 
-        context.setStrokeColor(UIColor.systemGreen.withAlphaComponent(0.85).cgColor)
-        context.setLineWidth(0.7)
-        context.setLineCap(.round)
-        context.beginPath()
-        for (start, end) in connections {
-            guard let startPoint = convertedPoints[start],
-                  let endPoint = convertedPoints[end] else { continue }
-            context.move(to: startPoint)
-            context.addLine(to: endPoint)
+        // Draw target aspect frame (matches crop)
+        context.setStrokeColor(UIColor.white.withAlphaComponent(0.9).cgColor)
+        context.setLineWidth(2.0)
+        context.stroke(CGRect(x: originX, y: originY, width: drawWidth, height: drawHeight))
+
+        if let box = faceBoundingBox {
+            context.setStrokeColor(UIColor.systemOrange.withAlphaComponent(0.8).cgColor)
+            context.setLineWidth(2)
+            let rect = CGRect(x: originX + box.origin.x * scale,
+                              y: originY + box.origin.y * scale,
+                              width: box.width * scale,
+                              height: box.height * scale)
+            context.stroke(rect)
         }
-        context.strokePath()
+
+        if !connections.isEmpty {
+            context.setStrokeColor(UIColor.systemGreen.withAlphaComponent(0.85).cgColor)
+            context.setLineWidth(0.7)
+            context.setLineCap(.round)
+            context.beginPath()
+            for (start, end) in connections {
+                guard let startPoint = convertedPoints[start],
+                      let endPoint = convertedPoints[end] else { continue }
+                context.move(to: startPoint)
+                context.addLine(to: endPoint)
+            }
+            context.strokePath()
+        }
 
         context.setFillColor(UIColor.systemYellow.cgColor)
         for point in convertedPoints.values {
