@@ -20,7 +20,7 @@ BASE_URL = "https://d28w3hxcjjqa9z.cloudfront.net/api/v1"
 PROCESSED_DATA_DIR = "FLUXSynID-processed"
 RESULTS_DIR = "test_results"
 REQUEST_TIMEOUT = 30
-DELAY_BETWEEN_REQUESTS = 0.1  # seconds to avoid overwhelming the API
+DELAY_BETWEEN_REQUESTS = 0.01  # seconds to avoid overwhelming the API
 SAVE_DETAILED_RESPONSES = True  # Save detailed server responses to file
 
 # Image type suffixes
