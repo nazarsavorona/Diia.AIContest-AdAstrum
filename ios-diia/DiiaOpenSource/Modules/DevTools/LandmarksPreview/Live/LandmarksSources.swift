@@ -179,7 +179,12 @@ final class ApiForwardingLandmarksSource: FaceLandmarksSource {
         let cropTarget: CIImage
         cropTarget = centerCrop(image: oriented, targetAspectRatio: 2.0 / 3.0)
 
-        guard let cgImage = ciContext.createCGImage(cropTarget, from: cropTarget.extent.integral) else { return nil }
+        // Mirror horizontally to match front camera user expectation
+        let mirrored = cropTarget
+            .transformed(by: CGAffineTransform(scaleX: -1, y: 1))
+            .transformed(by: CGAffineTransform(translationX: cropTarget.extent.width, y: 0))
+
+        guard let cgImage = ciContext.createCGImage(mirrored, from: mirrored.extent.integral) else { return nil }
 
         let imageSize = CGSize(width: cgImage.width, height: cgImage.height)
         let uiImage = UIImage(cgImage: cgImage, scale: 1, orientation: .up)
