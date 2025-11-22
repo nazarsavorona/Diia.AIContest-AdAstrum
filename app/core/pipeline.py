@@ -15,7 +15,7 @@ from app.validators.step6_background import BackgroundValidator
 from app.validators.step7_accessories import AccessoriesValidator
 from app.core.errors import ValidationResult
 from app.utils.image_utils import decode_base64_image, load_image_from_bytes
-from app.utils.frame_debugger import stream_debugger
+from app.utils.frame_debugger import frame_saver
 import config
 
 
@@ -237,9 +237,9 @@ class ValidationPipeline:
         
         status = 'success' if len(all_errors) == 0 else 'fail'
 
-        # Optionally show incoming stream frame in a debug window
-        stream_debugger.show(image, status=status, errors=all_errors)
-        
+        # Optionally save frame to disk for debugging
+        frame_saver.save(image, status=status, errors=all_errors)
+
         return {
             'status': status,
             'errors': all_errors,

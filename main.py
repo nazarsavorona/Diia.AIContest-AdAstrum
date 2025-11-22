@@ -11,7 +11,7 @@ from app.core import settings
 
 from app.api.routes import router
 from app import __version__
-from app.utils.frame_debugger import stream_debugger
+from app.utils.frame_debugger import frame_saver
 
 # Set up logging
 resolved_log_level = getattr(logging, settings.LOG_LEVEL.upper(), logging.INFO)
@@ -67,7 +67,7 @@ async def startup_event():
 async def shutdown_event():
     """Cleanup resources on shutdown"""
     logger.info("Shutting down Photo Validation API...")
-    stream_debugger.stop()
+    logger.info(f"Total frames saved during session: {frame_saver._frame_count}")
 
 
 # Global exception handler

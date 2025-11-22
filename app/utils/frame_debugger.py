@@ -1,16 +1,16 @@
 """
-Lightweight OpenCV frame viewer for debugging stream requests.
+Lightweight frame saver for debugging validation requests.
 
-Enabled via STREAM_DEBUG_SHOW_FRAMES env var. Frames are pushed to a background
-thread so API handlers are not blocked by cv2.imshow.
+Enabled via DEBUG_SAVE_FRAMES env var. Frames are saved to disk with annotations
+showing validation status and errors.
 """
 
 from __future__ import annotations
 
 import logging
 import os
-import queue
-import threading
+from datetime import datetime
+from pathlib import Path
 from typing import Iterable, Optional
 
 import cv2
@@ -19,45 +19,44 @@ import numpy as np
 from app.core import settings
 
 
-class FrameDebugger:
-    """Displays incoming frames in an OpenCV window for quick visual debug."""
+class FrameSaver:
+    """Saves incoming validation frames to disk for debugging purposes."""
 
     def __init__(
         self,
         enabled: bool,
-        window_name: str = "Stream Debug",
-        max_queue: int = 3,
+        output_dir: str,
+        max_frames: int = 100,
     ):
-        self.enabled = enabled and self._display_available()
-        self.window_name = window_name
-        self.max_queue = max_queue
+        """
+        Initialize the frame saver.
 
-        self._queue: queue.Queue[np.ndarray] = queue.Queue(maxsize=max_queue)
-        self._stop_event = threading.Event()
-        self._thread: Optional[threading.Thread] = None
+        Args:
+            enabled: Whether frame saving is enabled
+            output_dir: Directory path where frames will be saved
+            max_frames: Maximum number of frames to keep (oldest will be deleted)
+        """
+        self.enabled = enabled
+        self.output_dir = Path(output_dir)
+        self.max_frames = max_frames
         self._logger = logging.getLogger(__name__)
-        self._failed = False
+        self._frame_count = 0
 
         if self.enabled:
-            self._logger.info("Frame debugger enabled; window=%s", self.window_name)
+            self._ensure_output_dir()
+            self._logger.info("Frame saver enabled; output_dir=%s", self.output_dir)
         else:
-            self._logger.debug("Frame debugger disabled (flag off or no display).")
+            self._logger.debug("Frame saver disabled.")
 
-    def _display_available(self) -> bool:
-        """Check if a display is available for cv2.imshow."""
-        if os.name == "nt":
-            return True
-        return bool(os.environ.get("DISPLAY"))
+    def _ensure_output_dir(self) -> None:
+        """Create output directory if it doesn't exist."""
+        try:
+            self.output_dir.mkdir(parents=True, exist_ok=True)
+        except Exception as exc:
+            self._logger.error("Failed to create output directory %s: %s", self.output_dir, exc)
+            self.enabled = False
 
-    def start(self) -> None:
-        """Start background display thread."""
-        if not self.enabled or self._thread:
-            return
-
-        self._thread = threading.Thread(target=self._run, daemon=True)
-        self._thread.start()
-
-    def show(
+    def save(
         self,
         frame: np.ndarray,
         *,
@@ -65,67 +64,54 @@ class FrameDebugger:
         errors: Optional[Iterable] = None,
     ) -> None:
         """
-        Queue a frame for display. Drops oldest frame if the queue is full.
+        Save a frame to disk with annotations.
+
+        Args:
+            frame: Image frame as numpy array (BGR format)
+            status: Validation status ('success' or 'fail')
+            errors: List of validation errors
         """
-        if not self.enabled or self._failed or frame is None:
+        if not self.enabled or frame is None:
             return
 
-        if self._thread is None:
-            self.start()
-
-        annotated = self._annotate_frame(frame, status=status, errors=errors)
-
         try:
-            self._queue.put_nowait(annotated)
-        except queue.Full:
-            try:
-                self._queue.get_nowait()
-                self._queue.put_nowait(annotated)
-            except Exception:
-                # If we cannot queue, just drop the frame silently
-                pass
-        except Exception as exc:  # pragma: no cover - defensive
-            self._logger.warning("Failed to queue frame for debug display: %s", exc)
-            self._failed = True
+            # Annotate the frame
+            annotated = self._annotate_frame(frame, status=status, errors=errors)
 
-    def stop(self) -> None:
-        """Stop the background display thread."""
-        if not self._thread:
-            return
+            # Generate filename with timestamp and status
+            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S_%f")
+            status_str = status or "unknown"
+            filename = f"frame_{timestamp}_{status_str}.jpg"
+            filepath = self.output_dir / filename
 
-        self._stop_event.set()
-        self._thread.join(timeout=1.0)
-        self._thread = None
+            # Save the frame
+            cv2.imwrite(str(filepath), annotated)
+            self._frame_count += 1
+            self._logger.debug("Saved frame: %s", filename)
 
-    # Internal helpers
-    def _run(self) -> None:
-        try:
-            cv2.namedWindow(self.window_name, cv2.WINDOW_NORMAL)
+            # Clean up old frames if we exceed max_frames
+            self._cleanup_old_frames()
+
         except Exception as exc:
-            self._logger.warning("Disabling frame debugger (window error): %s", exc)
-            self._failed = True
-            return
+            self._logger.warning("Failed to save frame: %s", exc)
 
-        while not self._stop_event.is_set():
-            try:
-                frame = self._queue.get(timeout=0.1)
-            except queue.Empty:
-                continue
-
-            try:
-                cv2.imshow(self.window_name, frame)
-                if cv2.waitKey(1) & 0xFF == ord("q"):
-                    self._stop_event.set()
-                    break
-            except Exception as exc:
-                self._logger.warning("Disabling frame debugger (imshow error): %s", exc)
-                self._failed = True
-                break
-
+    def _cleanup_old_frames(self) -> None:
+        """Remove oldest frames if we exceed max_frames limit."""
         try:
-            cv2.destroyWindow(self.window_name)
-        except Exception:
-            pass
+            # Get all frame files sorted by modification time
+            frame_files = sorted(
+                self.output_dir.glob("frame_*.jpg"),
+                key=lambda p: p.stat().st_mtime
+            )
+
+            # Delete oldest files if we exceed the limit
+            while len(frame_files) > self.max_frames:
+                oldest_file = frame_files.pop(0)
+                oldest_file.unlink()
+                self._logger.debug("Deleted old frame: %s", oldest_file.name)
+
+        except Exception as exc:
+            self._logger.warning("Failed to cleanup old frames: %s", exc)
 
     def _annotate_frame(
         self,
@@ -134,7 +120,17 @@ class FrameDebugger:
         status: Optional[str] = None,
         errors: Optional[Iterable] = None,
     ) -> np.ndarray:
-        """Overlay minimal info to make debugging easier."""
+        """
+        Overlay validation info on the frame.
+
+        Args:
+            frame: Original frame
+            status: Validation status
+            errors: List of validation errors
+
+        Returns:
+            Annotated frame with text overlays
+        """
         annotated = frame.copy()
 
         text_lines = []
@@ -153,6 +149,10 @@ class FrameDebugger:
         if error_codes:
             text_lines.append(f"errors: {', '.join(error_codes[:2])}")
 
+        # Add timestamp
+        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        text_lines.append(f"time: {timestamp}")
+
         if text_lines:
             color = (0, 200, 0) if status == "success" else (0, 0, 255)
             for idx, line in enumerate(text_lines):
@@ -170,11 +170,30 @@ class FrameDebugger:
 
         return annotated
 
+    def clear_all_frames(self) -> int:
+        """
+        Delete all saved frames from the output directory.
 
-stream_debugger = FrameDebugger(
-    enabled=settings.STREAM_DEBUG_SHOW_FRAMES,
-    window_name=settings.STREAM_DEBUG_WINDOW_NAME,
-    max_queue=settings.STREAM_DEBUG_MAX_QUEUE,
+        Returns:
+            Number of frames deleted
+        """
+        try:
+            frame_files = list(self.output_dir.glob("frame_*.jpg"))
+            count = len(frame_files)
+            for frame_file in frame_files:
+                frame_file.unlink()
+            self._logger.info("Deleted %d frames from %s", count, self.output_dir)
+            return count
+        except Exception as exc:
+            self._logger.error("Failed to clear frames: %s", exc)
+            return 0
+
+
+# Initialize the global frame saver instance
+frame_saver = FrameSaver(
+    enabled=settings.DEBUG_SAVE_FRAMES,
+    output_dir=settings.DEBUG_FRAMES_DIR,
+    max_frames=settings.DEBUG_MAX_FRAMES,
 )
 
-__all__ = ["stream_debugger", "FrameDebugger"]
+__all__ = ["frame_saver", "FrameSaver"]
