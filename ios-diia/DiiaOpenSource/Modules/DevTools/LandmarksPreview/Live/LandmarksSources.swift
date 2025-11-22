@@ -60,8 +60,8 @@ final class ApiForwardingLandmarksSource: FaceLandmarksSource {
     private let decoder = JSONDecoder()
     private let processingQueue = DispatchQueue(label: "ua.gov.diia.landmarks.api", qos: .userInitiated)
     private let ciContext = CIContext()
-    private let debugSaveFrames = true
-    private let debugSaveLimit = 6
+    private let debugSaveFrames = false
+    private let debugSaveLimit = 0
     private var debugSavedCount = 0
 
     private var inFlight = false

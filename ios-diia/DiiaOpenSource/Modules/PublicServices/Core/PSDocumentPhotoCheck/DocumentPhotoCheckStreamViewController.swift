@@ -175,7 +175,7 @@ final class DocumentPhotoCheckStreamViewController: UIViewController, BaseView {
         layer.videoGravity = .resizeAspectFill
         if let connection = layer.connection {
             connection.videoOrientation = .portrait
-            connection.automaticallyAdjustsVideoMirroring = true
+            connection.automaticallyAdjustsVideoMirroring = false
             connection.isVideoMirrored = true
         }
         layer.frame = previewContainer.bounds
