@@ -167,24 +167,13 @@ final class FeedNewsPresenter: FeedNewsAction {
     }
     
     private func handleError(error: NetworkError, retryAction: @escaping Callback) {
-        GeneralErrorsHandler.process(
-            error: .init(networkError: error),
-            with: retryAction,
-            didRetry: false,
-            in: view
-        )
+        // Suppressed popup
+        print("FeedNews error suppressed: \(error)")
     }
 
     private func handleCriticalError(error: NetworkError, retryAction: @escaping Callback) {
-        GeneralErrorsHandler.process(
-            error: .init(networkError: error),
-            with: { [weak self] in
-                self?.didRetry = true
-                retryAction()
-            },
-            didRetry: didRetry,
-            in: view
-        )
+        // Suppressed popup
+        print("FeedNews critical error suppressed: \(error)")
     }
 }
 

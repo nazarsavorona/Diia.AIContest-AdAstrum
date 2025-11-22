@@ -25,13 +25,8 @@ class PortalRedirectionService {
                 case .next(let response):
                     self.handleTemplate(alert: response.template, in: view)
                 case .failed(let error):
-                    GeneralErrorsHandler.process(
-                        error: .init(networkError: error),
-                        with: { [weak self] in
-                            self?.requestService(type: type, in: view)
-                        },
-                        didRetry: false,
-                        in: view)
+                    // Suppressed popup error handling per request
+                    print("Portal redirect error suppressed: \(error)")
                 default:
                     return
                 }

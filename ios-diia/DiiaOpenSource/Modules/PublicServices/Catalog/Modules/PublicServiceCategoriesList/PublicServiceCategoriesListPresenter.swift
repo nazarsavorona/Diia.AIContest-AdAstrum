@@ -189,13 +189,8 @@ final class PublicServiceCategoriesListPresenter: NSObject, PublicServiceCategor
     }
     
     private func showNoInternetTemplate(_ error: NetworkError) {
-        GeneralErrorsHandler.process(
-            error: .init(networkError: error),
-            with: { [weak self] in
-                self?.updateServices()
-            },
-            didRetry: false,
-            in: view)
+        // GeneralErrorsHandler disabled per request to avoid system popups.
+        log("Network error suppressed: \(error)")
     }
 
     func searchClick() {

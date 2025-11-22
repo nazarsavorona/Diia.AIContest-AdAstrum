@@ -149,12 +149,8 @@ final class FeedPresenter: FeedAction {
     
     // MARK: - Handlers
     private func handleError(error: NetworkError, retryAction: @escaping Callback) {
-        GeneralErrorsHandler.process(
-            error: .init(networkError: error),
-            with: retryAction,
-            didRetry: false,
-            in: view
-        )
+        // Suppressed popup
+        print("Feed main error suppressed: \(error)")
     }
 }
 

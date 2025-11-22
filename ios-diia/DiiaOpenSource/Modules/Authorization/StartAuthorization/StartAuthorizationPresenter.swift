@@ -61,15 +61,7 @@ final class StartAuthorizationPresenter: StartAuthorizationAction {
                     self.processAuthMethods(response)
                     view.setLoadingState(.ready)
                 case .failed(let error):
-                    GeneralErrorsHandler.process(
-                        error: .init(networkError: error),
-                        with: { [weak self] in
-                            guard let self = self else { return }
-                            self.getAuthMethods()
-                        },
-                        didRetry: false,
-                        in: view,
-                        notClosable: true)
+                    print("Auth methods error suppressed: \(error)")
                 default:
                     break
                 }
