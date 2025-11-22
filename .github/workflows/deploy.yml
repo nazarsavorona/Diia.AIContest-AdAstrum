@@ -67,10 +67,16 @@ jobs:
       - name: Check if infrastructure changed
         id: check-infra
         run: |
-          if git diff HEAD~1 --name-only | grep -q "aws/cloudformation-template.yaml"; then
+          # Fetch more history to enable diff
+          git fetch --depth=2 origin ${{ github.ref }}
+          
+          # Check if CloudFormation template changed in this commit
+          if git diff HEAD~1 HEAD --name-only 2>/dev/null | grep -q "aws/cloudformation-template.yaml"; then
             echo "changed=true" >> $GITHUB_OUTPUT
+            echo "Infrastructure template changed - will update stack"
           else
             echo "changed=false" >> $GITHUB_OUTPUT
+            echo "Infrastructure template unchanged - skipping stack update"
           fi
 
       - name: Deploy CloudFormation Stack
