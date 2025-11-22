@@ -66,7 +66,7 @@ final class ApiForwardingLandmarksSource: FaceLandmarksSource {
     private var throttleInterval: TimeInterval = 0.35
     private var currentTask: URLSessionDataTask?
 
-    init(baseURL: URL = URL(string: "https://d28w3hxcjjqa9z.cloudfront.net/api/v1")!,
+    init(baseURL: URL = URL(string: "http://127.0.0.1:8000/api/v1")!,
          session: URLSession = .shared) {
         self.session = session
         self.endpoint = baseURL.appendingPathComponent("validate/stream")
@@ -174,8 +174,12 @@ final class ApiForwardingLandmarksSource: FaceLandmarksSource {
 
     private func encode(sampleBuffer: CMSampleBuffer, orientation: CGImagePropertyOrientation) -> (base64: String, size: CGSize)? {
         guard let pixelBuffer = CMSampleBufferGetImageBuffer(sampleBuffer) else { return nil }
-        let oriented = CIImage(cvPixelBuffer: pixelBuffer).oriented(orientation)
-        let cropped = centerCrop(image: oriented, targetAspectRatio: 2.0 / 3.0)
+        // Keep as-captured orientation; preview layer already set to portrait
+        let oriented = CIImage(cvPixelBuffer: pixelBuffer).oriented(.up)
+        let cropped: CIImage
+
+        cropped = centerCrop(image: oriented, targetAspectRatio: 2.0 / 3.0)
+            
         guard let cgImage = ciContext.createCGImage(cropped, from: cropped.extent.integral) else { return nil }
 
         let imageSize = CGSize(width: cgImage.width, height: cgImage.height)

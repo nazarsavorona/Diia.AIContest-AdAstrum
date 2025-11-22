@@ -21,6 +21,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         window.makeKeyAndVisible()
         
         // AppConfigurator.configureApp should be called before creating any apiClient with NetworkConfiguration.default.session in order to set the interceptor first
+        
         AppConfigurator.configureApp()
         
         UIApplication.shared.registerForRemoteNotifications()
