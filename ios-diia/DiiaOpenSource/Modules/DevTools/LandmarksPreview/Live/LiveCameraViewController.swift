@@ -132,7 +132,7 @@ final class LiveCameraViewController: UIViewController {
         if let connection = layer.connection {
             connection.videoOrientation = .portrait
             connection.automaticallyAdjustsVideoMirroring = false
-            connection.isVideoMirrored = false
+            connection.isVideoMirrored = true
         }
         layer.frame = view.bounds
         view.layer.insertSublayer(layer, at: 0)

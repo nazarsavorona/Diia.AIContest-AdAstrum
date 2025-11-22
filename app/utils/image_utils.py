@@ -6,7 +6,7 @@ import base64
 import io
 from typing import Tuple, Optional
 import numpy as np
-from PIL import Image, ImageOps
+from PIL import Image
 import cv2
 
 
@@ -91,7 +91,6 @@ def decode_base64_image(base64_string: str) -> np.ndarray:
         # Convert to PIL Image
         try:
             pil_image = Image.open(img_bytes)
-            pil_image = ImageOps.exif_transpose(pil_image)  # respect camera orientation
             pil_image.load()  # Force load to validate image
         except Exception as e:
             raise ValueError(
@@ -133,7 +132,6 @@ def load_image_from_bytes(image_bytes: bytes) -> np.ndarray:
         numpy array in BGR format
     """
     pil_image = Image.open(io.BytesIO(image_bytes))
-    pil_image = ImageOps.exif_transpose(pil_image)
     
     if pil_image.mode != 'RGB':
         pil_image = pil_image.convert('RGB')
