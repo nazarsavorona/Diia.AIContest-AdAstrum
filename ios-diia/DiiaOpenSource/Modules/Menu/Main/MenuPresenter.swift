@@ -118,6 +118,13 @@ private extension MenuPresenter {
                     self?.view.open(module: LandmarksPreviewModule())
                 }),
             DSListItemViewModel(
+                id: "liveCamera",
+                leftSmallIcon: R.image.menuDocumentsActive.image,
+                title: "Камера (Live)",
+                onClick: { [weak self] in
+                    self?.view.open(module: LiveCameraModule())
+                }),
+            DSListItemViewModel(
                 id: "",
                 title: "Тест конструктора дизайн системи",
                 onClick: { [weak self] in

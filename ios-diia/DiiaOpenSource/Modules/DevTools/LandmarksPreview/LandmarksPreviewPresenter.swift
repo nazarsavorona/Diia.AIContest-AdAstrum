@@ -4,12 +4,21 @@ import DiiaMVPModule
 protocol LandmarksPreviewAction: BasePresenter {
     func reloadSample()
     func showSamplePicker()
+    func selectMode(_ mode: LandmarksPreviewMode)
 }
 
 protocol LandmarksPreviewView: BaseView {
     func display(viewModel: LandmarksPreviewViewModel)
     func displayError(message: String)
     func showSamplePicker(options: [LandmarkSampleDescriptor], selectedId: String?, onSelect: @escaping (LandmarkSampleDescriptor) -> Void)
+    func startLiveMode(sourceType: LandmarksPreviewMode)
+    func stopLiveMode()
+}
+
+enum LandmarksPreviewMode {
+    case fixtures
+    case api
+    case mediapipe
 }
 
 struct LandmarksPreviewViewModel {
@@ -21,6 +30,7 @@ struct LandmarksPreviewViewModel {
     let originalImageSize: CGSize
     let landmarks: [LandmarkPoint]
     let connections: [(Int, Int)]
+    let mode: LandmarksPreviewMode
 }
 
 struct LandmarkPoint {
@@ -41,6 +51,7 @@ final class LandmarksPreviewPresenter: LandmarksPreviewAction {
     private let loader: LandmarkSampleLoader
     private var availableSamples: [LandmarkSampleDescriptor] = []
     private var currentSample: LandmarkSampleDescriptor?
+    private var mode: LandmarksPreviewMode = .fixtures
 
     init(view: LandmarksPreviewView, loader: LandmarkSampleLoader) {
         self.view = view
@@ -63,6 +74,19 @@ final class LandmarksPreviewPresenter: LandmarksPreviewAction {
         }
         guard let sample = currentSample else { return }
         openSample(sample)
+    }
+
+    func selectMode(_ mode: LandmarksPreviewMode) {
+        self.mode = mode
+        switch mode {
+        case .fixtures:
+            view?.stopLiveMode()
+            if let sample = currentSample {
+                openSample(sample)
+            }
+        case .api, .mediapipe:
+            view?.startLiveMode(sourceType: mode)
+        }
     }
 
     func showSamplePicker() {
@@ -105,7 +129,8 @@ final class LandmarksPreviewPresenter: LandmarksPreviewAction {
                                                       image: snapshot.image,
                                                       originalImageSize: snapshot.originalImageSize,
                                                       landmarks: snapshot.landmarks,
-                                                      connections: mediaPipeFullMeshConnections)
+                                                      connections: mediaPipeFullMeshConnections,
+                                                      mode: mode)
             view?.display(viewModel: viewModel)
         } catch {
             view?.displayError(message: "Unable to load mock landmarks: \(error.localizedDescription)")
