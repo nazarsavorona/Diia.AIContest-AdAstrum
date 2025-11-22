@@ -19,6 +19,8 @@ final class DocumentPhotoOnboardingViewController: UIViewController, BaseView {
     private let topView = TopNavigationView()
     private let scrollView = UIScrollView()
     private let contentStack = UIStackView()
+    private let bottomStack = UIStackView()
+    private let pageContainer = UIStackView()
     private let contextMenuProvider: ContextMenuProviderProtocol
     
     init(contextMenuProvider: ContextMenuProviderProtocol) {
@@ -38,7 +40,7 @@ final class DocumentPhotoOnboardingViewController: UIViewController, BaseView {
 
 private extension DocumentPhotoOnboardingViewController {
     func setupView() {
-        view.addBackgroundImage(R.image.light_background.image)
+        view.backgroundColor = Constants.backgroundColor
         setupNavigation()
         setupScrollView()
         buildContent()
@@ -58,63 +60,85 @@ private extension DocumentPhotoOnboardingViewController {
         topView.setupOnClose { [weak self] in
             self?.closeModule(animated: true)
         }
-        topView.setupOnContext { [weak self] in
-            guard let self else { return }
-            self.contextMenuProvider.openContextMenu(in: self)
-        }
+        topView.setupOnContext(callback: nil)
     }
     
     func setupScrollView() {
         scrollView.translatesAutoresizingMaskIntoConstraints = false
         contentStack.translatesAutoresizingMaskIntoConstraints = false
+        bottomStack.translatesAutoresizingMaskIntoConstraints = false
+        pageContainer.translatesAutoresizingMaskIntoConstraints = false
         
         scrollView.alwaysBounceVertical = true
         contentStack.axis = .vertical
         contentStack.spacing = Constants.verticalSpacing
+        contentStack.alignment = .fill
+        
+        bottomStack.axis = .vertical
+        bottomStack.alignment = .center
+        bottomStack.spacing = Constants.bottomStackButtonsSpacing
+        
+        pageContainer.axis = .vertical
+        pageContainer.spacing = Constants.bottomSpacing
         
         view.addSubview(scrollView)
-        scrollView.addSubview(contentStack)
+        view.addSubview(bottomStack)
+        scrollView.addSubview(pageContainer)
+        pageContainer.addArrangedSubview(contentStack)
         
         NSLayoutConstraint.activate([
-            scrollView.topAnchor.constraint(equalTo: topView.bottomAnchor, constant: Constants.topSpacing),
+            scrollView.topAnchor.constraint(equalTo: topView.bottomAnchor),
             scrollView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             scrollView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
-            scrollView.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor),
+            scrollView.bottomAnchor.constraint(equalTo: bottomStack.topAnchor, constant: -Constants.bottomAreaSpacing),
             
-            contentStack.topAnchor.constraint(equalTo: scrollView.contentLayoutGuide.topAnchor, constant: Constants.topSpacing),
-            contentStack.leadingAnchor.constraint(equalTo: scrollView.contentLayoutGuide.leadingAnchor, constant: Constants.horizontalPadding),
-            contentStack.trailingAnchor.constraint(equalTo: scrollView.contentLayoutGuide.trailingAnchor, constant: -Constants.horizontalPadding),
-            contentStack.bottomAnchor.constraint(equalTo: scrollView.contentLayoutGuide.bottomAnchor, constant: -Constants.bottomSpacing),
-            contentStack.widthAnchor.constraint(equalTo: scrollView.frameLayoutGuide.widthAnchor, constant: -Constants.horizontalPadding * 2)
+            pageContainer.topAnchor.constraint(equalTo: scrollView.contentLayoutGuide.topAnchor, constant: Constants.topSpacing),
+            pageContainer.leadingAnchor.constraint(equalTo: scrollView.contentLayoutGuide.leadingAnchor, constant: Constants.horizontalPadding),
+            pageContainer.trailingAnchor.constraint(equalTo: scrollView.contentLayoutGuide.trailingAnchor, constant: -Constants.horizontalPadding),
+            pageContainer.bottomAnchor.constraint(equalTo: scrollView.contentLayoutGuide.bottomAnchor, constant: -Constants.bottomSpacing),
+            pageContainer.widthAnchor.constraint(equalTo: scrollView.frameLayoutGuide.widthAnchor, constant: -Constants.horizontalPadding * 2),
+            
+            bottomStack.leadingAnchor.constraint(greaterThanOrEqualTo: view.leadingAnchor, constant: Constants.horizontalPadding),
+            bottomStack.trailingAnchor.constraint(lessThanOrEqualTo: view.trailingAnchor, constant: -Constants.horizontalPadding),
+            bottomStack.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+            bottomStack.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -Constants.bottomStackBottomPadding)
         ])
     }
     
     func buildContent() {
         let titleLabel = UILabel()
-        titleLabel.font = FontBook.grandTextFont
+        titleLabel.font = Constants.titleFont
         titleLabel.textColor = .label
         titleLabel.numberOfLines = 0
         titleLabel.text = Constants.title
+        titleLabel.accessibilityIdentifier = "document_photo_title"
         
         let descriptionCard = makeCardView(text: Constants.description)
-        
-        let requirementsTitle = UILabel()
-        requirementsTitle.font = FontBook.bigText
-        requirementsTitle.textColor = .label
-        requirementsTitle.numberOfLines = 0
-        requirementsTitle.text = Constants.requirementsTitle
         
         let requirementsCard = makeRequirementsCard()
         let cameraButton = makeCameraButton()
         let galleryButton = makeGalleryButton()
         
-        contentStack.addArrangedSubview(titleLabel)
-        contentStack.addArrangedSubview(descriptionCard)
-        contentStack.addArrangedSubview(requirementsTitle)
-        contentStack.addArrangedSubview(requirementsCard)
-        contentStack.setCustomSpacing(Constants.sectionSpacing, after: requirementsCard)
-        contentStack.addArrangedSubview(cameraButton)
-        contentStack.addArrangedSubview(galleryButton)
+        let views: [UIView] = [
+            titleLabel,
+            descriptionCard,
+            requirementsCard
+        ]
+        
+        views.enumerated().forEach { index, view in
+            contentStack.addArrangedSubview(view)
+            if view === requirementsCard {
+                contentStack.setCustomSpacing(Constants.sectionSpacing, after: view)
+            } else if view === descriptionCard {
+                contentStack.setCustomSpacing(Constants.cardSpacing, after: view)
+            }
+            if view === titleLabel {
+                contentStack.setCustomSpacing(Constants.titleBottomSpacing, after: view)
+            }
+        }
+        
+        bottomStack.addArrangedSubview(cameraButton)
+        bottomStack.addArrangedSubview(galleryButton)
     }
     
     func makeCardView(text: String) -> UIView {
@@ -124,7 +148,7 @@ private extension DocumentPhotoOnboardingViewController {
         container.layer.masksToBounds = true
         
         let label = UILabel()
-        label.font = FontBook.usualFont
+        label.font = Constants.bodyFont
         label.textColor = .label
         label.numberOfLines = 0
         label.text = text
@@ -151,10 +175,18 @@ private extension DocumentPhotoOnboardingViewController {
         stack.axis = .vertical
         stack.spacing = Constants.bulletSpacing
         stack.translatesAutoresizingMaskIntoConstraints = false
+
+        let titleLabel = UILabel()
+        titleLabel.font = Constants.requirementsTitleFont
+        titleLabel.textColor = .label
+        titleLabel.numberOfLines = 0
+        titleLabel.text = Constants.requirementsTitle
+        stack.addArrangedSubview(titleLabel)
+        stack.setCustomSpacing(Constants.requirementsTitleSpacing, after: titleLabel)
         
         Constants.requirements.forEach { text in
             let label = UILabel()
-            label.font = FontBook.usualFont
+            label.font = Constants.bodyFont
             label.textColor = .label
             label.numberOfLines = 0
             label.text = "• \(text)"
@@ -177,25 +209,22 @@ private extension DocumentPhotoOnboardingViewController {
         button.setTitle(Constants.openCameraTitle, for: .normal)
         button.setTitleColor(.white, for: .normal)
         button.backgroundColor = .black
-        button.titleLabel?.font = FontBook.bigText
+        button.titleLabel?.font = Constants.buttonFont
         button.layer.cornerRadius = Constants.buttonCornerRadius
         button.heightAnchor.constraint(equalToConstant: Constants.buttonHeight).isActive = true
+        button.widthAnchor.constraint(equalToConstant: UIScreen.main.bounds.width * Constants.buttonWidthMultiplier).isActive = true
+        button.contentEdgeInsets = UIEdgeInsets(top: 0, left: 12, bottom: 0, right: 12)
         button.addTarget(self, action: #selector(openCameraTapped), for: .touchUpInside)
         return button
     }
     
     func makeGalleryButton() -> UIButton {
         let button = UIButton(type: .system)
-        let attributedTitle = NSAttributedString(
-            string: Constants.openGalleryTitle,
-            attributes: [
-                .font: FontBook.usualFont,
-                .foregroundColor: UIColor.label,
-                .underlineStyle: NSUnderlineStyle.single.rawValue
-            ]
-        )
-        button.setAttributedTitle(attributedTitle, for: .normal)
+        button.setTitle(Constants.openGalleryTitle, for: .normal)
+        button.setTitleColor(.label, for: .normal)
+        button.titleLabel?.font = Constants.bodyFont
         button.contentHorizontalAlignment = .center
+        button.tintColor = .label
         button.addTarget(self, action: #selector(openGalleryTapped), for: .touchUpInside)
         return button
     }
@@ -230,16 +259,31 @@ private extension DocumentPhotoOnboardingViewController {
         static let openCameraTitle = "Відкрити камеру"
         static let openGalleryTitle = "Завантажити фото з галереї"
         static let galleryStubMessage = "Завантаження з галереї буде доступне згодом."
+        static let backgroundColor = UIColor(red: 0.89, green: 0.95, blue: 0.98, alpha: 1.0)
         static let horizontalPadding: CGFloat = 16
         static let verticalSpacing: CGFloat = 16
-        static let sectionSpacing: CGFloat = 20
-        static let topSpacing: CGFloat = 12
-        static let bottomSpacing: CGFloat = 24
-        static let cardPadding: CGFloat = 16
+        static let cardSpacing: CGFloat = 12
+        static let sectionSpacing: CGFloat = 24
+        static let topSpacing: CGFloat = 16
+        static let bottomSpacing: CGFloat = 40
+        static let bottomStackButtonsSpacing: CGFloat = 20
+        // Backward alias for any cached references
+        static let bottomStackSpacing: CGFloat = bottomStackButtonsSpacing
+        static let bottomAreaSpacing: CGFloat = 16
+        static let bottomStackBottomPadding: CGFloat = 20
+        static let cardPadding: CGFloat = 18
         static let cardAlpha: CGFloat = 0.92
         static let cardCornerRadius: CGFloat = 18
         static let bulletSpacing: CGFloat = 8
         static let buttonHeight: CGFloat = 52
         static let buttonCornerRadius: CGFloat = 18
+        static let titleBottomSpacing: CGFloat = 12
+        static let buttonWidthMultiplier: CGFloat = 0.75
+        static let requirementsTitleSpacing: CGFloat = 8
+        
+        static let titleFont: UIFont = FontBook.grandTextFont
+        static let bodyFont: UIFont = FontBook.usualFont
+        static let buttonFont: UIFont = FontBook.bigText
+        static let requirementsTitleFont: UIFont = FontBook.bigText
     }
 }
