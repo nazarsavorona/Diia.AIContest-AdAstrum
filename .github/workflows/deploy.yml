@@ -87,7 +87,7 @@ jobs:
               ECSAMI=${{ steps.get-ami.outputs.ami_id }} \
               InstanceType=g4dn.xlarge \
               DesiredCapacity=1 \
-              MaxSize=3 \
+              MaxSize=1 \
               ImageTag=${{ github.sha }}
 
       - name: Wait for service to be stable

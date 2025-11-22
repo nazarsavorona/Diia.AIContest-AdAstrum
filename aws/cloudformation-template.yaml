@@ -21,8 +21,8 @@ Parameters:
   
   MaxSize:
     Type: Number
-    Default: 3
-    Description: Maximum number of ECS instances
+    Default: 1
+    Description: Maximum number of ECS instances (set to 1 for cost efficiency)
   
   ImageTag:
     Type: String
@@ -501,7 +501,7 @@ Resources:
       HealthCheckGracePeriodSeconds: 120
       DeploymentConfiguration:
         MaximumPercent: 200
-        MinimumHealthyPercent: 100
+        MinimumHealthyPercent: 0
 
   # ==================== CloudFront Distribution ====================
 
