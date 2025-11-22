@@ -60,6 +60,9 @@ final class ApiForwardingLandmarksSource: FaceLandmarksSource {
     private let decoder = JSONDecoder()
     private let processingQueue = DispatchQueue(label: "ua.gov.diia.landmarks.api", qos: .userInitiated)
     private let ciContext = CIContext()
+    private let debugSaveFrames = true
+    private let debugSaveLimit = 6
+    private var debugSavedCount = 0
 
     private var inFlight = false
     private var lastRequestTime: TimeInterval = 0
@@ -174,7 +177,8 @@ final class ApiForwardingLandmarksSource: FaceLandmarksSource {
 
     private func encode(sampleBuffer: CMSampleBuffer, orientation: CGImagePropertyOrientation) -> (base64: String, size: CGSize)? {
         guard let pixelBuffer = CMSampleBufferGetImageBuffer(sampleBuffer) else { return nil }
-        let oriented = CIImage(cvPixelBuffer: pixelBuffer).oriented(.up)
+        // Respect camera orientation passed from capture
+        let oriented = CIImage(cvPixelBuffer: pixelBuffer).oriented(orientation)
         
         let cropTarget: CIImage
         cropTarget = centerCrop(image: oriented, targetAspectRatio: 2.0 / 3.0)
@@ -189,6 +193,12 @@ final class ApiForwardingLandmarksSource: FaceLandmarksSource {
         let imageSize = CGSize(width: cgImage.width, height: cgImage.height)
         let uiImage = UIImage(cgImage: cgImage, scale: 1, orientation: .up)
         guard let jpegData = uiImage.jpegData(compressionQuality: 0.65) else { return nil }
+
+        if debugSaveFrames && debugSavedCount < debugSaveLimit {
+            debugSavedCount += 1
+            saveDebugImage(data: jpegData, name: "stream_frame_\(debugSavedCount).jpg")
+        }
+
         let base64 = jpegData.base64EncodedString()
         return (base64, imageSize)
     }
@@ -203,6 +213,20 @@ final class ApiForwardingLandmarksSource: FaceLandmarksSource {
     private static func rect(from bbox: [Double]?) -> CGRect? {
         guard let bbox, bbox.count == 4 else { return nil }
         return CGRect(x: bbox[0], y: bbox[1], width: bbox[2], height: bbox[3])
+    }
+
+    private func saveDebugImage(data: Data, name: String) {
+        let fm = FileManager.default
+        let dir = fm.urls(for: .cachesDirectory, in: .userDomainMask).first?.appendingPathComponent("LandmarksDebug", isDirectory: true)
+        guard let dir else { return }
+        do {
+            try fm.createDirectory(at: dir, withIntermediateDirectories: true)
+            let url = dir.appendingPathComponent(name)
+            try data.write(to: url, options: .atomic)
+            print("Saved debug image to \(url.path)")
+        } catch {
+            print("Failed to save debug image: \(error.localizedDescription)")
+        }
     }
 
     private func logResponse(detection: LandmarksDetection) {

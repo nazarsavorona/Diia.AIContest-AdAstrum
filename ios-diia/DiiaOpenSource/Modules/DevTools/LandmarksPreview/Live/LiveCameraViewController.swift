@@ -74,7 +74,6 @@ final class LiveCameraViewController: UIViewController {
     private func setupLayout() {
         overlayView.translatesAutoresizingMaskIntoConstraints = false
         overlayView.backgroundColor = .clear
-        overlayView.transform = CGAffineTransform(scaleX: -1, y: 1) // mirror to match front camera UX
         view.addSubview(overlayView)
 
         infoContainer.translatesAutoresizingMaskIntoConstraints = false
