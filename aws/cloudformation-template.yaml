@@ -500,7 +500,7 @@ Resources:
           TargetGroupArn: !Ref TargetGroup
       HealthCheckGracePeriodSeconds: 120
       DeploymentConfiguration:
-        MaximumPercent: 100
+        MaximumPercent: 200
         MinimumHealthyPercent: 0
         DeploymentCircuitBreaker:
           Enable: true

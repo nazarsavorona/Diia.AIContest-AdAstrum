@@ -122,6 +122,27 @@ jobs:
 
           echo "New task definition registered: $NEW_TASK_ARN"
 
+          # For single-instance GPU setup: Stop old tasks before starting new ones
+          echo "Stopping old tasks to free GPU resources..."
+          OLD_TASKS=$(aws ecs list-tasks \
+            --cluster ${{ env.STACK_NAME }}-cluster \
+            --service-name ${{ env.STACK_NAME }}-service-v2 \
+            --query 'taskArns[]' \
+            --output text)
+          
+          if [ -n "$OLD_TASKS" ]; then
+            for task in $OLD_TASKS; do
+              echo "Stopping task: $task"
+              aws ecs stop-task \
+                --cluster ${{ env.STACK_NAME }}-cluster \
+                --task "$task" \
+                --reason "Deployment: Freeing GPU for new task" \
+                --no-cli-pager || true
+            done
+            echo "Waiting for old tasks to stop..."
+            sleep 15
+          fi
+
           # Update the service to use the new task definition
           aws ecs update-service \
             --cluster ${{ env.STACK_NAME }}-cluster \
@@ -139,3 +160,4 @@ jobs:
             --services ${{ env.STACK_NAME }}-service-v2 \
             --region ${{ env.AWS_REGION }}
           echo "✓ Deployment completed successfully"
+
