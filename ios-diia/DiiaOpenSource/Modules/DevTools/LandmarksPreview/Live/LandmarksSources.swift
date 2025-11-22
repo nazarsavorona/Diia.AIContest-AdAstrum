@@ -64,9 +64,10 @@ final class ApiForwardingLandmarksSource: FaceLandmarksSource {
     private var inFlight = false
     private var lastRequestTime: TimeInterval = 0
     private var throttleInterval: TimeInterval = 0.35
+    private var cropRectNormalized: CGRect?
     private var currentTask: URLSessionDataTask?
 
-    init(baseURL: URL = URL(string: "http://127.0.0.1:8000/api/v1")!,
+    init(baseURL: URL = URL(string: "https://d28w3hxcjjqa9z.cloudfront.net/api/v1")!,
          session: URLSession = .shared) {
         self.session = session
         self.endpoint = baseURL.appendingPathComponent("validate/stream")
