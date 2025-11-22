@@ -14,8 +14,6 @@
 		<string>viber</string>
 		<string>tg</string>
 	</array>
-	<key>NSCameraUsageDescription</key>
-	<string>This app needs camera access to scan QR codes and capture photos for document verification.</string>
 	<key>Scheme</key>
 	<string>$(SCHEME)</string>
 	<key>UIApplicationSceneManifest</key>

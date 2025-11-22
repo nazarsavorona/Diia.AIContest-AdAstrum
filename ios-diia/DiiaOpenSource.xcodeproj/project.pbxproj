@@ -1961,12 +1961,12 @@
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 2050;
-				DEVELOPMENT_TEAM = Z7LK8H8F87;
+				DEVELOPMENT_TEAM = 5P5UY54NMK;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = DiiaOpenSource/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = DiiaOS;
 				INFOPLIST_KEY_LSApplicationCategoryType = "";
-				INFOPLIST_KEY_NSCameraUsageDescription = "Camera access is needed to preview live video for landmark detection and QR scanning.";
+				INFOPLIST_KEY_NSCameraUsageDescription = "This app needs camera access to scan QR codes and capture photos for document verification.";
 				INFOPLIST_KEY_NSFaceIDUsageDescription = "Enabling Face ID allows you quick and secure access to your account";
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen;
@@ -1979,7 +1979,7 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 4.20.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.yourname.diiaopensource;
+				PRODUCT_BUNDLE_IDENTIFIER = diia;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
@@ -1999,12 +1999,12 @@
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 2050;
-				DEVELOPMENT_TEAM = Z7LK8H8F87;
+				DEVELOPMENT_TEAM = 5P5UY54NMK;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = DiiaOpenSource/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = DiiaOS;
 				INFOPLIST_KEY_LSApplicationCategoryType = "";
-				INFOPLIST_KEY_NSCameraUsageDescription = "Camera access is needed to preview live video for landmark detection and QR scanning.";
+				INFOPLIST_KEY_NSCameraUsageDescription = "This app needs camera access to scan QR codes and capture photos for document verification.";
 				INFOPLIST_KEY_NSFaceIDUsageDescription = "Enabling Face ID allows you quick and secure access to your account";
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen;
@@ -2017,7 +2017,7 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 4.20.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.yourname.diiaopensource;
+				PRODUCT_BUNDLE_IDENTIFIER = diia;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
