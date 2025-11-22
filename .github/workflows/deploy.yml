@@ -96,14 +96,6 @@ jobs:
               MaxSize=1 \
               ImageTag=${{ github.sha }}
 
-      - name: Wait for service to be stable
-        run: |
-          echo "Waiting for ECS service to stabilize..."
-          aws ecs wait services-stable \
-            --cluster ${{ env.STACK_NAME }}-cluster \
-            --services ${{ env.STACK_NAME }}-service-v2 \
-            --region ${{ env.AWS_REGION }}
-
       - name: Update ECS Service with new image
         env:
           IMAGE: ${{ steps.build-image.outputs.image }}
