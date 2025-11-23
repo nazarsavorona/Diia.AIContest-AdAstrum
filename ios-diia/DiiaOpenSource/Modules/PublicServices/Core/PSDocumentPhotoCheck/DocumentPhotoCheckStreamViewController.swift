@@ -75,7 +75,9 @@ final class DocumentPhotoCheckStreamViewController: UIViewController, BaseView {
     private let frameScale: CGFloat = 1.0 / 1.5
     private var lastSampleBuffer: CMSampleBuffer?
     private var lastValidImage: UIImage?
-    private var needsRetake = false
+    private var isPhotoValidationPassed = false {
+        didSet { updateButtonState() }
+    }
     private var isFinalValidating = false
     private var lastOrientation: CGImagePropertyOrientation = .right
     private let finalValidationURL = URL(string: "https://d28w3hxcjjqa9z.cloudfront.net/api/v1/validate/photo")!
@@ -191,23 +193,20 @@ final class DocumentPhotoCheckStreamViewController: UIViewController, BaseView {
     }
     
     private func updateButtonState() {
-        switch (isFinalValidating, needsRetake, isFrameValid) {
-        case (true, _, _):
+        if isFinalValidating {
             continueButton.isEnabled = false
             continueButton.backgroundColor = UIColor.black.withAlphaComponent(0.2)
             continueButton.setTitleColor(.white.withAlphaComponent(0.6), for: .disabled)
             continueButton.setTitle("Перевіряємо...", for: .disabled)
-        case (false, true, _):
-            continueButton.isEnabled = true
-            continueButton.backgroundColor = .black
-            continueButton.setTitleColor(.white, for: .normal)
-            continueButton.setTitle("Завантажити нове фото", for: .normal)
-        case (false, false, true):
+            return
+        }
+        
+        if isPhotoValidationPassed {
             continueButton.isEnabled = true
             continueButton.backgroundColor = .black
             continueButton.setTitleColor(.white, for: .normal)
             continueButton.setTitle("Продовжити", for: .normal)
-        default:
+        } else {
             continueButton.isEnabled = false
             continueButton.backgroundColor = UIColor.black.withAlphaComponent(0.2)
             continueButton.setTitleColor(UIColor.white.withAlphaComponent(0.6), for: .disabled)
@@ -225,31 +224,18 @@ final class DocumentPhotoCheckStreamViewController: UIViewController, BaseView {
         messageLabel.isHidden = false
         overlayView.state = .idle
         isFrameValid = false
+        isPhotoValidationPassed = false
         if showLandmarks {
             landmarksOverlay.isHidden = false
         }
     }
     
     @objc private func continueTapped() {
-        if isFinalValidating { return }
-        if needsRetake {
-            needsRetake = false
-            isFrameValid = false
-            messageLabel.isHidden = true
-            lastValidImage = nil
-            lastSampleBuffer = nil
-            overlayView.state = .idle
-            cameraService.start()
-            updateButtonState()
-            return
+        guard isPhotoValidationPassed, !isFinalValidating, let image = lastValidImage else { return }
+        let successVC = PhotoSuccessViewController(photoImage: image) { [weak self] in
+            self?.navigationController?.popViewController(animated: true)
         }
-        guard let payload = encodeForFinalValidation() else { return }
-        // freeze stream
-        cameraService.stop()
-        validationSource.stop()
-        isFinalValidating = true
-        updateButtonState()
-        performFinalValidation(with: payload.image, base64: payload.base64)
+        navigationController?.pushViewController(successVC, animated: true)
     }
     
     private func showPlaceholder(reason: String) {
@@ -258,15 +244,24 @@ final class DocumentPhotoCheckStreamViewController: UIViewController, BaseView {
         messageLabel.isHidden = false
         overlayView.state = .idle
         isFrameValid = false
+        isPhotoValidationPassed = false
         previewLayer?.removeFromSuperlayer()
         previewLayer = nil
         updateLandmarksVisibility()
     }
 
+    private func startPhotoValidationIfPossible() {
+        guard !isFinalValidating, !isPhotoValidationPassed else { return }
+        guard let payload = encodeForFinalValidation() else { return }
+        lastValidImage = nil
+        performFinalValidation(with: payload.image, base64: payload.base64)
+    }
+
     private func performFinalValidation(with image: UIImage, base64: String) {
         isFinalValidating = true
-        continueButton.setTitle("Перевіряємо...", for: .normal)
-        continueButton.isEnabled = false
+        isPhotoValidationPassed = false
+        updateButtonState()
+        continueButton.setTitle("Перевіряємо...", for: .disabled)
         let requestBody: [String: Any] = ["image": base64, "mode": "full"]
         var request = URLRequest(url: finalValidationURL)
         request.httpMethod = "POST"
@@ -296,21 +291,24 @@ final class DocumentPhotoCheckStreamViewController: UIViewController, BaseView {
     }
     
     private func handleFinalValidationSuccess(image: UIImage) {
-        needsRetake = false
-        let successVC = PhotoSuccessViewController(photoImage: image) { [weak self] in
-            self?.navigationController?.popViewController(animated: true)
-        }
-        navigationController?.pushViewController(successVC, animated: true)
+        isPhotoValidationPassed = true
+        lastValidImage = image
+        messageLabel.isHidden = true
+        isFrameValid = true
+        overlayView.state = .success
+        cameraService.stop()
+        validationSource.stop()
         updateButtonState()
     }
     
     private func handleFinalValidationFailure(message: String) {
-        needsRetake = true
         isFrameValid = false
         messageLabel.text = localizedMessage(code: nil, fallback: message)
         messageLabel.isHidden = false
+        overlayView.state = .idle
+        isPhotoValidationPassed = false
+        lastValidImage = nil
         updateButtonState()
-        cameraService.start()
     }
     
     @objc private func toggleLandmarks(_ sender: UISwitch) {
@@ -396,6 +394,7 @@ extension DocumentPhotoCheckStreamViewController: CameraCaptureServiceDelegate {
         let now = CACurrentMediaTime()
         lastSampleBuffer = sampleBuffer
         lastOrientation = orientation
+        if isFinalValidating || isPhotoValidationPassed { return }
         guard !isValidating, now - lastValidationAt > validationThrottle else { return }
         isValidating = true
         lastValidationAt = now
@@ -410,9 +409,7 @@ extension DocumentPhotoCheckStreamViewController: CameraCaptureServiceDelegate {
                     self.messageLabel.isHidden = true
                     self.isFrameValid = true
                     self.overlayView.state = .success
-                    if let payload = self.encodeForFinalValidation() {
-                        self.lastValidImage = payload.image
-                    }
+                    self.startPhotoValidationIfPossible()
                     if self.showLandmarks {
                         self.landmarksOverlay.isHidden = false
                         self.landmarksOverlay.configure(landmarks: detection.landmarks,
@@ -436,7 +433,7 @@ extension DocumentPhotoCheckStreamViewController: CameraCaptureServiceDelegate {
                 self.messageLabel.isHidden = false
                 self.overlayView.state = .idle
                 self.landmarksOverlay.isHidden = true
-                self.needsRetake = true
+                self.isPhotoValidationPassed = false
             }
         }
     }
@@ -450,6 +447,9 @@ extension DocumentPhotoCheckStreamViewController: CameraCaptureServiceDelegate {
             } else {
                 self.messageLabel.text = "Доступ до камери заборонено."
                 self.messageLabel.isHidden = false
+                self.isPhotoValidationPassed = false
+                self.isFrameValid = false
+                self.overlayView.state = .idle
             }
         }
     }
@@ -458,6 +458,9 @@ extension DocumentPhotoCheckStreamViewController: CameraCaptureServiceDelegate {
         DispatchQueue.main.async { [weak self] in
             self?.messageLabel.text = error.localizedDescription
             self?.messageLabel.isHidden = false
+            self?.isPhotoValidationPassed = false
+            self?.isFrameValid = false
+            self?.overlayView.state = .idle
         }
     }
 }
