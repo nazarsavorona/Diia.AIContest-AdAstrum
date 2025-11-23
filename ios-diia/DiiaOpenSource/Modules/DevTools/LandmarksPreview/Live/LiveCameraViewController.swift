@@ -12,6 +12,21 @@ final class LiveCameraViewController: UIViewController {
     private let fpsWindow: CFTimeInterval = 2.0
     private var lastCapturedImage: UIImage?
     private var hasNavigatedToSuccess = false
+    private var isValidationSuccess = false
+
+    private let continueButton: UIButton = {
+        let button = UIButton(type: .system)
+        button.setTitle("Продовжити", for: .normal)
+        button.setTitle("Продовжити", for: .disabled)
+        button.setTitleColor(.white, for: .normal)
+        button.setTitleColor(.white, for: .disabled)
+        button.titleLabel?.font = FontBook.bigText
+        button.backgroundColor = .black
+        button.layer.cornerRadius = 22
+        button.translatesAutoresizingMaskIntoConstraints = false
+        button.isEnabled = false
+        return button
+    }()
 
     private let statusLabel: UILabel = {
         let label = UILabel()
@@ -50,6 +65,9 @@ final class LiveCameraViewController: UIViewController {
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         hasNavigatedToSuccess = false
+        isValidationSuccess = false
+        continueButton.isEnabled = false
+        continueButton.alpha = 0.5
     }
     
     override func viewWillDisappear(_ animated: Bool) {
@@ -75,12 +93,20 @@ final class LiveCameraViewController: UIViewController {
         view.addSubview(infoContainer)
         infoContainer.addSubview(statusLabel)
         infoContainer.addSubview(responseLabel)
+        view.addSubview(continueButton)
+        
+        continueButton.addTarget(self, action: #selector(continueTapped), for: .touchUpInside)
 
         NSLayoutConstraint.activate([
             overlayView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             overlayView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
             overlayView.topAnchor.constraint(equalTo: view.topAnchor),
             overlayView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
+
+            continueButton.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+            continueButton.widthAnchor.constraint(equalTo: view.widthAnchor, multiplier: 0.7),
+            continueButton.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -80),
+            continueButton.heightAnchor.constraint(equalToConstant: 56),
 
             infoContainer.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 12),
             infoContainer.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -12),
@@ -164,10 +190,19 @@ extension LiveCameraViewController: CameraCaptureServiceDelegate {
                                            faceBoundingBox: detection.faceBoundingBox)
                 self.updateResponse(status: detection.status, errors: detection.errors, latencyMs: detection.latencyMs)
                 
-                // Navigate to success screen if validation passed
-                if detection.status.uppercased() == "SUCCESS" && !self.hasNavigatedToSuccess {
-                    self.hasNavigatedToSuccess = true
-                    self.navigateToSuccessScreen()
+                // Enable/disable continue button based on validation
+                if detection.status.uppercased() == "SUCCESS" && !self.isValidationSuccess {
+                    self.isValidationSuccess = true
+                    DispatchQueue.main.async {
+                        self.continueButton.isEnabled = true
+                        self.continueButton.alpha = 1.0
+                    }
+                } else if detection.status.uppercased() != "SUCCESS" && self.isValidationSuccess {
+                    self.isValidationSuccess = false
+                    DispatchQueue.main.async {
+                        self.continueButton.isEnabled = false
+                        self.continueButton.alpha = 0.5
+                    }
                 }
             case .failure(let error):
                 self.recordResponseTick()
@@ -245,19 +280,23 @@ private extension LiveCameraViewController {
         return UIImage(cgImage: cgImage, scale: 1.0, orientation: .right)
     }
     
-    func navigateToSuccessScreen() {
-        DispatchQueue.main.async { [weak self] in
-            guard let self = self, let capturedImage = self.lastCapturedImage else { return }
-            
-            // Stop camera before navigating
-            self.cameraService.stop()
-            self.landmarksSource.stop()
-            
-            let successVC = PhotoSuccessViewController(photoImage: capturedImage) { [weak self] in
-                // On dismiss, pop back to previous screen
-                self?.navigationController?.popViewController(animated: true)
-            }
-            self.navigationController?.pushViewController(successVC, animated: true)
+    @objc func continueTapped() {
+        guard !hasNavigatedToSuccess, let capturedImage = lastCapturedImage else { return }
+        hasNavigatedToSuccess = true
+        
+        // Disable button immediately
+        continueButton.isEnabled = false
+        continueButton.alpha = 0.5
+        
+        // Stop camera and landmarks
+        cameraService.stop()
+        landmarksSource.stop()
+        
+        // Navigate to success screen
+        let successVC = PhotoSuccessViewController(photoImage: capturedImage) { [weak self] in
+            // On dismiss, pop back to previous screen
+            self?.navigationController?.popViewController(animated: true)
         }
+        navigationController?.pushViewController(successVC, animated: true)
     }
 }

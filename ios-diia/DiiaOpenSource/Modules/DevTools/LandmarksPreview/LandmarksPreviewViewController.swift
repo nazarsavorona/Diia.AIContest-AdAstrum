@@ -203,7 +203,7 @@ final class LandmarksOverlayView: UIView {
     private var connections: [(Int, Int)] = []
     private var originalImageSize: CGSize = .zero
     private var faceBoundingBox: CGRect?
-    private let dotRadius: CGFloat = 2.5
+    private let dotRadius: CGFloat = 1.5
     private let targetAspectRatio: CGFloat = 2.0 / 3.0
     var showsReferenceFrame: Bool = true
     var showsBoundingBox: Bool = true
@@ -211,7 +211,7 @@ final class LandmarksOverlayView: UIView {
 
     override init(frame: CGRect) {
         super.init(frame: frame)
-        isUserInteractionEnabled = false
+        isUserInteractionEnabled = false 
         backgroundColor = .clear
     }
 
@@ -280,8 +280,8 @@ final class LandmarksOverlayView: UIView {
         }
 
         if !connections.isEmpty {
-            context.setStrokeColor(UIColor.systemGreen.withAlphaComponent(0.85).cgColor)
-            context.setLineWidth(0.7)
+        context.setStrokeColor(UIColor.systemGreen.withAlphaComponent(0.85).cgColor)
+        context.setLineWidth(0.5)
             context.setLineCap(.round)
             context.beginPath()
             for (start, end) in connections {
