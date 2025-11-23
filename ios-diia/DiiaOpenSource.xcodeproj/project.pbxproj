@@ -1989,7 +1989,7 @@
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 2050;
-				DEVELOPMENT_TEAM = 5P5UY54NMK;
+				DEVELOPMENT_TEAM = Z7LK8H8F87;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = DiiaOpenSource/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = DiiaOS;
@@ -2006,18 +2006,18 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 4.20.0;
-				PRODUCT_BUNDLE_IDENTIFIER = diia;
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				PROVISIONING_PROFILE_SPECIFIER = "";
-				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
-				SUPPORTS_MACCATALYST = NO;
-				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
-				SWIFT_EMIT_LOC_STRINGS = YES;
-				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = 1;
-			};
-			name = Debug;
+			MARKETING_VERSION = 4.20.0;
+			PRODUCT_BUNDLE_IDENTIFIER = com.adastrumteam.diia;
+			PRODUCT_NAME = "$(TARGET_NAME)";
+			PROVISIONING_PROFILE_SPECIFIER = "";
+			SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+			SUPPORTS_MACCATALYST = NO;
+			SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
+			SWIFT_EMIT_LOC_STRINGS = YES;
+			SWIFT_VERSION = 5.0;
+			TARGETED_DEVICE_FAMILY = 1;
+		};
+		name = Debug;
 		};
 		42F922B529FBDC820072DDC1 /* Release */ = {
 			isa = XCBuildConfiguration;
@@ -2027,7 +2027,7 @@
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 2050;
-				DEVELOPMENT_TEAM = 5P5UY54NMK;
+				DEVELOPMENT_TEAM = Z7LK8H8F87;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = DiiaOpenSource/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = DiiaOS;
@@ -2044,18 +2044,18 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 4.20.0;
-				PRODUCT_BUNDLE_IDENTIFIER = diia;
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				PROVISIONING_PROFILE_SPECIFIER = "";
-				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
-				SUPPORTS_MACCATALYST = NO;
-				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
-				SWIFT_EMIT_LOC_STRINGS = YES;
-				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = 1;
-			};
-			name = Release;
+			MARKETING_VERSION = 4.20.0;
+			PRODUCT_BUNDLE_IDENTIFIER = com.adastrumteam.diia;
+			PRODUCT_NAME = "$(TARGET_NAME)";
+			PROVISIONING_PROFILE_SPECIFIER = "";
+			SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+			SUPPORTS_MACCATALYST = NO;
+			SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
+			SWIFT_EMIT_LOC_STRINGS = YES;
+			SWIFT_VERSION = 5.0;
+			TARGETED_DEVICE_FAMILY = 1;
+		};
+		name = Release;
 		};
 /* End XCBuildConfiguration section */
 
