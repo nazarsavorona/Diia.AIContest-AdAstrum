@@ -44,6 +44,18 @@ final class DocumentPhotoCheckStreamViewController: UIViewController, BaseView {
         button.isEnabled = false
         return button
     }()
+    private let retryButton: UIButton = {
+        let button = UIButton(type: .system)
+        button.setTitle("Спробувати знову", for: .normal)
+        button.setTitleColor(.black, for: .normal)
+        button.titleLabel?.font = FontBook.bigText
+        button.backgroundColor = UIColor.white.withAlphaComponent(0.9)
+        button.layer.cornerRadius = 22
+        button.layer.borderWidth = 1
+        button.layer.borderColor = UIColor.black.cgColor
+        button.isHidden = true
+        return button
+    }()
     private let landmarksToggleStack: UIStackView = {
         let label = UILabel()
         label.font = FontBook.usualFont
@@ -65,7 +77,10 @@ final class DocumentPhotoCheckStreamViewController: UIViewController, BaseView {
     private var isFrameValid: Bool = false {
         didSet {
             updateButtonState()
-            overlayView.state = isFrameValid ? .success : .idle
+            // Не змінювати overlay, якщо валідація вже успішно завершена
+            if !isPhotoValidationPassed {
+                overlayView.state = isFrameValid ? .success : .idle
+            }
         }
     }
     
@@ -113,6 +128,7 @@ final class DocumentPhotoCheckStreamViewController: UIViewController, BaseView {
         placeholderImageView.translatesAutoresizingMaskIntoConstraints = false
         landmarksOverlay.translatesAutoresizingMaskIntoConstraints = false
         continueButton.translatesAutoresizingMaskIntoConstraints = false
+        retryButton.translatesAutoresizingMaskIntoConstraints = false
         messageLabel.translatesAutoresizingMaskIntoConstraints = false
         overlayView.translatesAutoresizingMaskIntoConstraints = false
         
@@ -124,6 +140,7 @@ final class DocumentPhotoCheckStreamViewController: UIViewController, BaseView {
         previewContainer.addSubview(messageLabel)
         previewContainer.addSubview(overlayView)
         previewContainer.addSubview(landmarksToggleStack)
+        previewContainer.addSubview(retryButton)
         previewContainer.addSubview(continueButton)
         if let toggle = landmarksToggleStack.arrangedSubviews.last as? UISwitch {
             toggle.addTarget(self, action: #selector(toggleLandmarks(_:)), for: .valueChanged)
@@ -138,6 +155,7 @@ final class DocumentPhotoCheckStreamViewController: UIViewController, BaseView {
         topView.setupOnContext(callback: nil)
         
         continueButton.addTarget(self, action: #selector(continueTapped), for: .touchUpInside)
+        retryButton.addTarget(self, action: #selector(retryTapped), for: .touchUpInside)
         updateButtonState()
         
         NSLayoutConstraint.activate([
@@ -174,7 +192,12 @@ final class DocumentPhotoCheckStreamViewController: UIViewController, BaseView {
             continueButton.centerXAnchor.constraint(equalTo: previewContainer.centerXAnchor),
             continueButton.widthAnchor.constraint(equalTo: previewContainer.widthAnchor, multiplier: 0.7),
             continueButton.bottomAnchor.constraint(equalTo: previewContainer.safeAreaLayoutGuide.bottomAnchor, constant: -20),
-            continueButton.heightAnchor.constraint(equalToConstant: 56)
+            continueButton.heightAnchor.constraint(equalToConstant: 56),
+            
+            retryButton.centerXAnchor.constraint(equalTo: previewContainer.centerXAnchor),
+            retryButton.widthAnchor.constraint(equalTo: previewContainer.widthAnchor, multiplier: 0.7),
+            retryButton.bottomAnchor.constraint(equalTo: continueButton.topAnchor, constant: -12),
+            retryButton.heightAnchor.constraint(equalToConstant: 56)
         ])
     }
     
@@ -198,6 +221,7 @@ final class DocumentPhotoCheckStreamViewController: UIViewController, BaseView {
             continueButton.backgroundColor = UIColor.black.withAlphaComponent(0.2)
             continueButton.setTitleColor(.white.withAlphaComponent(0.6), for: .disabled)
             continueButton.setTitle("Перевіряємо...", for: .disabled)
+            retryButton.isHidden = true
             return
         }
         
@@ -206,15 +230,23 @@ final class DocumentPhotoCheckStreamViewController: UIViewController, BaseView {
             continueButton.backgroundColor = .black
             continueButton.setTitleColor(.white, for: .normal)
             continueButton.setTitle("Продовжити", for: .normal)
+            retryButton.isHidden = false
         } else {
             continueButton.isEnabled = false
             continueButton.backgroundColor = UIColor.black.withAlphaComponent(0.2)
             continueButton.setTitleColor(UIColor.white.withAlphaComponent(0.6), for: .disabled)
             continueButton.setTitle("Продовжити", for: .disabled)
+            retryButton.isHidden = true
         }
     }
     
     private func showErrors(_ errors: [StreamValidationError]) {
+        // Не змінювати стан, якщо валідація вже пройшла успішно
+        if isPhotoValidationPassed { return }
+        
+        // Сховати зафіксоване зображення, показати live preview
+        hideFrozenFrame()
+        
         guard let first = errors.first else {
             messageLabel.isHidden = true
             overlayView.state = .idle
@@ -231,11 +263,27 @@ final class DocumentPhotoCheckStreamViewController: UIViewController, BaseView {
     }
     
     @objc private func continueTapped() {
-        guard isPhotoValidationPassed, !isFinalValidating, let image = lastValidImage else { return }
-        let successVC = PhotoSuccessViewController(photoImage: image) { [weak self] in
-            self?.navigationController?.popViewController(animated: true)
-        }
-        navigationController?.pushViewController(successVC, animated: true)
+        guard isPhotoValidationPassed, !isFinalValidating else { return }
+        navigateToSuccessPage()
+    }
+    
+    @objc private func retryTapped() {
+        // Скинути стан для нової спроби
+        isPhotoValidationPassed = false
+        isFrameValid = false
+        isFinalValidating = false
+        lastValidImage = nil
+        messageLabel.isHidden = true
+        
+        // Сховати зафіксоване зображення
+        hideFrozenFrame()
+        
+        // Оновити UI
+        overlayView.state = .idle
+        updateButtonState()
+        
+        // Перезапустити камеру
+        cameraService.start()
     }
     
     private func showPlaceholder(reason: String) {
@@ -291,14 +339,55 @@ final class DocumentPhotoCheckStreamViewController: UIViewController, BaseView {
     }
     
     private func handleFinalValidationSuccess(image: UIImage) {
+        // Спочатку встановити прапорець, щоб зупинити обробку нових кадрів
         isPhotoValidationPassed = true
+        
+        // Негайно зупинити камеру і валідацію
+        cameraService.stop()
+        validationSource.stop()
+        
+        // Тепер безпечно оновити UI
         lastValidImage = image
         messageLabel.isHidden = true
         isFrameValid = true
         overlayView.state = .success
-        cameraService.stop()
-        validationSource.stop()
+        
+        // Зображення вже зафіксовано раніше при появі зеленої рамки
+        
         updateButtonState()
+    }
+    
+    private func freezeCurrentFrame() {
+        // Створити зображення з поточного sample buffer
+        guard let sampleBuffer = lastSampleBuffer,
+              let pixelBuffer = CMSampleBufferGetImageBuffer(sampleBuffer) else { return }
+        
+        let ciImage = CIImage(cvPixelBuffer: pixelBuffer).oriented(lastOrientation)
+        
+        guard let cgImage = ciContext.createCGImage(ciImage, from: ciImage.extent) else { return }
+        let frozenImage = UIImage(cgImage: cgImage, scale: 1.0, orientation: .up)
+        
+        // Показати зафіксоване зображення як на livestream
+        placeholderImageView.image = frozenImage
+        placeholderImageView.isHidden = false
+        placeholderImageView.contentMode = .scaleAspectFill
+        
+        // Дзеркально відобразити, як на livestream
+        placeholderImageView.transform = CGAffineTransform(scaleX: -1, y: 1)
+    }
+    
+    private func hideFrozenFrame() {
+        placeholderImageView.isHidden = true
+        placeholderImageView.image = nil
+        placeholderImageView.transform = .identity
+    }
+    
+    private func navigateToSuccessPage() {
+        guard let image = lastValidImage else { return }
+        let successVC = PhotoSuccessViewController(photoImage: image) { [weak self] in
+            self?.navigationController?.popViewController(animated: true)
+        }
+        navigationController?.pushViewController(successVC, animated: true)
     }
     
     private func handleFinalValidationFailure(message: String) {
@@ -308,6 +397,10 @@ final class DocumentPhotoCheckStreamViewController: UIViewController, BaseView {
         overlayView.state = .idle
         isPhotoValidationPassed = false
         lastValidImage = nil
+        
+        // Сховати зафіксоване зображення, показати live preview
+        hideFrozenFrame()
+        
         updateButtonState()
     }
     
@@ -348,7 +441,12 @@ final class DocumentPhotoCheckStreamViewController: UIViewController, BaseView {
         guard let sampleBuffer = lastSampleBuffer,
               let pixelBuffer = CMSampleBufferGetImageBuffer(sampleBuffer) else { return nil }
         let oriented = CIImage(cvPixelBuffer: pixelBuffer).oriented(lastOrientation)
-        var cropped = centerCrop(image: oriented, targetAspectRatio: 2.0 / 3.0)
+        
+        // Відзеркалити зображення (бо камера показує дзеркально)
+        let mirrored = oriented.transformed(by: CGAffineTransform(scaleX: -1, y: 1))
+            .transformed(by: CGAffineTransform(translationX: oriented.extent.width, y: 0))
+        
+        var cropped = centerCrop(image: mirrored, targetAspectRatio: 2.0 / 3.0)
         let scale = frameScale
         let insetX = (cropped.extent.width * (1 - scale)) / 2
         let insetY = (cropped.extent.height * (1 - scale)) / 2
@@ -402,14 +500,37 @@ extension DocumentPhotoCheckStreamViewController: CameraCaptureServiceDelegate {
         validationSource.process(sampleBuffer: sampleBuffer, orientation: orientation) { [weak self] result in
             guard let self else { return }
             self.isValidating = false
+            
+            // Не обробляти результати, якщо валідація вже пройшла успішно
+            if self.isPhotoValidationPassed { return }
+            
             switch result {
             case .success(let detection):
                 self.lastFrameSize = detection.originalImageSize
                 if detection.errors.isEmpty && detection.status.lowercased() == "success" {
+                    // Зелена рамка - зафіксувати все!
                     self.messageLabel.isHidden = true
                     self.isFrameValid = true
                     self.overlayView.state = .success
-                    self.startPhotoValidationIfPossible()
+                    
+                    // СПОЧАТКУ зафіксувати знімок екрану (поки камера ще працює)
+                    self.freezeCurrentFrame()
+                    
+                    // Підготувати зображення для збереження
+                    if let payload = self.encodeForFinalValidation() {
+                        self.lastValidImage = payload.image
+                    }
+                    
+                    // Встановити прапорець успішної валідації (кнопка стане доступною)
+                    self.isPhotoValidationPassed = true
+                    
+                    // ТЕПЕР зупинити камеру і валідацію
+                    self.cameraService.stop()
+                    self.validationSource.stop()
+                    
+                    // Оновити стан кнопки
+                    self.updateButtonState()
+                    
                     if self.showLandmarks {
                         self.landmarksOverlay.isHidden = false
                         self.landmarksOverlay.configure(landmarks: detection.landmarks,
@@ -418,6 +539,9 @@ extension DocumentPhotoCheckStreamViewController: CameraCaptureServiceDelegate {
                                                         faceBoundingBox: detection.faceBoundingBox)
                     }
                 } else {
+                    // Є помилки - сховати зафіксоване зображення, показати live stream
+                    self.hideFrozenFrame()
+                    
                     self.showErrors(detection.errors)
                     if self.showLandmarks {
                         self.landmarksOverlay.isHidden = false
@@ -428,6 +552,9 @@ extension DocumentPhotoCheckStreamViewController: CameraCaptureServiceDelegate {
                     }
                 }
             case .failure(let error):
+                // Помилка - сховати зафіксоване зображення
+                self.hideFrozenFrame()
+                
                 self.isFrameValid = false
                 self.messageLabel.text = error.localizedDescription
                 self.messageLabel.isHidden = false
