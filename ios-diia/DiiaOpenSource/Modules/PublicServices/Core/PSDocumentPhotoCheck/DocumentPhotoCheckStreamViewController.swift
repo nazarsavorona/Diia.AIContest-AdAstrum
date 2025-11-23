@@ -253,7 +253,7 @@ final class DocumentPhotoCheckStreamViewController: UIViewController, BaseView {
     private func startPhotoValidationIfPossible() {
         guard !isFinalValidating, !isPhotoValidationPassed else { return }
         guard let payload = encodeForFinalValidation() else { return }
-        lastValidImage = nil
+        lastValidImage = payload.image
         performFinalValidation(with: payload.image, base64: payload.base64)
     }
 
