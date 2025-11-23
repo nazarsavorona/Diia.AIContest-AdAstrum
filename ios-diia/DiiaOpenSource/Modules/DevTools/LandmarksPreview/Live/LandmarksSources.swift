@@ -180,12 +180,7 @@ final class ApiForwardingLandmarksSource: FaceLandmarksSource {
         // Respect camera orientation passed from capture
         let oriented = CIImage(cvPixelBuffer: pixelBuffer).oriented(orientation)
         
-        var cropTarget = centerCrop(image: oriented, targetAspectRatio: 2.0 / 3.0)
-        // Apply same frame scale as UI (shrink to smaller 2:3 box)
-        let scale: CGFloat = 1.0 / 1.5
-        let insetX = (cropTarget.extent.width * (1 - scale)) / 2
-        let insetY = (cropTarget.extent.height * (1 - scale)) / 2
-        cropTarget = cropTarget.cropped(to: cropTarget.extent.insetBy(dx: insetX, dy: insetY))
+        let cropTarget = centerCrop(image: oriented, targetAspectRatio: 2.0 / 3.0)
 
         // Mirror horizontally to match front camera user expectation
         let mirrored = cropTarget
