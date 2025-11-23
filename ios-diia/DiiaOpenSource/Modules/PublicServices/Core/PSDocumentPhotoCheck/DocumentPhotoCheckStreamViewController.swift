@@ -44,6 +44,16 @@ final class DocumentPhotoCheckStreamViewController: UIViewController, BaseView {
         button.isEnabled = false
         return button
     }()
+    private let retakeButton: UIButton = {
+        let button = UIButton(type: .system)
+        button.setTitle("Зробити нове фото", for: .normal)
+        button.setTitleColor(.white, for: .normal)
+        button.titleLabel?.font = FontBook.bigText
+        button.backgroundColor = .black
+        button.layer.cornerRadius = 22
+        button.isHidden = true
+        return button
+    }()
     private let landmarksToggleStack: UIStackView = {
         let label = UILabel()
         label.font = FontBook.usualFont
@@ -124,6 +134,7 @@ final class DocumentPhotoCheckStreamViewController: UIViewController, BaseView {
         previewContainer.addSubview(messageLabel)
         previewContainer.addSubview(overlayView)
         previewContainer.addSubview(landmarksToggleStack)
+        previewContainer.addSubview(retakeButton)
         previewContainer.addSubview(continueButton)
         if let toggle = landmarksToggleStack.arrangedSubviews.last as? UISwitch {
             toggle.addTarget(self, action: #selector(toggleLandmarks(_:)), for: .valueChanged)
@@ -138,6 +149,7 @@ final class DocumentPhotoCheckStreamViewController: UIViewController, BaseView {
         topView.setupOnContext(callback: nil)
         
         continueButton.addTarget(self, action: #selector(continueTapped), for: .touchUpInside)
+        retakeButton.addTarget(self, action: #selector(retakeTapped), for: .touchUpInside)
         updateButtonState()
         
         NSLayoutConstraint.activate([
@@ -170,6 +182,11 @@ final class DocumentPhotoCheckStreamViewController: UIViewController, BaseView {
             
             landmarksToggleStack.trailingAnchor.constraint(equalTo: previewContainer.trailingAnchor, constant: -12),
             landmarksToggleStack.topAnchor.constraint(equalTo: previewContainer.topAnchor, constant: 12),
+            
+            retakeButton.centerXAnchor.constraint(equalTo: previewContainer.centerXAnchor),
+            retakeButton.widthAnchor.constraint(equalTo: previewContainer.widthAnchor, multiplier: 0.7),
+            retakeButton.bottomAnchor.constraint(equalTo: continueButton.topAnchor, constant: -12),
+            retakeButton.heightAnchor.constraint(equalToConstant: 52),
             
             continueButton.centerXAnchor.constraint(equalTo: previewContainer.centerXAnchor),
             continueButton.widthAnchor.constraint(equalTo: previewContainer.widthAnchor, multiplier: 0.7),
@@ -206,11 +223,15 @@ final class DocumentPhotoCheckStreamViewController: UIViewController, BaseView {
             continueButton.backgroundColor = .black
             continueButton.setTitleColor(.white, for: .normal)
             continueButton.setTitle("Продовжити", for: .normal)
+            retakeButton.isHidden = false
+            retakeButton.isEnabled = true
         } else {
             continueButton.isEnabled = false
             continueButton.backgroundColor = UIColor.black.withAlphaComponent(0.2)
             continueButton.setTitleColor(UIColor.white.withAlphaComponent(0.6), for: .disabled)
             continueButton.setTitle("Продовжити", for: .disabled)
+            retakeButton.isHidden = true
+            retakeButton.isEnabled = false
         }
     }
     
@@ -236,6 +257,17 @@ final class DocumentPhotoCheckStreamViewController: UIViewController, BaseView {
             self?.navigationController?.popViewController(animated: true)
         }
         navigationController?.pushViewController(successVC, animated: true)
+    }
+    
+    @objc private func retakeTapped() {
+        isPhotoValidationPassed = false
+        isFrameValid = false
+        isFinalValidating = false
+        messageLabel.isHidden = true
+        overlayView.state = .idle
+        lastValidImage = nil
+        updateButtonState()
+        cameraService.start()
     }
     
     private func showPlaceholder(reason: String) {
