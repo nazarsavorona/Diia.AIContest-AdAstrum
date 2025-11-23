@@ -77,8 +77,8 @@ final class DocumentPhotoCheckStreamViewController: UIViewController, BaseView {
     private var isFrameValid: Bool = false {
         didSet {
             updateButtonState()
-            // Не змінювати overlay, якщо валідація вже успішно завершена
-            if !isPhotoValidationPassed {
+            // Не змінювати overlay під час фінальної валідації або після успішної валідації
+            if !isFinalValidating && !isPhotoValidationPassed {
                 overlayView.state = isFrameValid ? .success : .idle
             }
         }
@@ -241,8 +241,8 @@ final class DocumentPhotoCheckStreamViewController: UIViewController, BaseView {
     }
     
     private func showErrors(_ errors: [StreamValidationError]) {
-        // Не змінювати стан, якщо валідація вже пройшла успішно
-        if isPhotoValidationPassed { return }
+        // Не змінювати стан під час фінальної валідації або якщо валідація вже пройшла
+        if isFinalValidating || isPhotoValidationPassed { return }
         
         // Сховати зафіксоване зображення, показати live preview
         hideFrozenFrame()
@@ -301,15 +301,22 @@ final class DocumentPhotoCheckStreamViewController: UIViewController, BaseView {
     private func startPhotoValidationIfPossible() {
         guard !isFinalValidating, !isPhotoValidationPassed else { return }
         guard let payload = encodeForFinalValidation() else { return }
-        lastValidImage = nil
+        // Зберегти зображення для success page
+        lastValidImage = payload.image
         performFinalValidation(with: payload.image, base64: payload.base64)
     }
 
     private func performFinalValidation(with image: UIImage, base64: String) {
         isFinalValidating = true
         isPhotoValidationPassed = false
+        
+ь        // Показати повідомлення "Перевіряємо..." і зберегти зелену рамку
+        messageLabel.text = "Перевіряємо фото..."
+        messageLabel.isHidden = false
+        overlayView.state = .success
+        
         updateButtonState()
-        continueButton.setTitle("Перевіряємо...", for: .disabled)
+        
         let requestBody: [String: Any] = ["image": base64, "mode": "full"]
         var request = URLRequest(url: finalValidationURL)
         request.httpMethod = "POST"
@@ -339,21 +346,19 @@ final class DocumentPhotoCheckStreamViewController: UIViewController, BaseView {
     }
     
     private func handleFinalValidationSuccess(image: UIImage) {
-        // Спочатку встановити прапорець, щоб зупинити обробку нових кадрів
+        // Фінальна валідація пройшла успішно!
         isPhotoValidationPassed = true
+        lastValidImage = image
+        messageLabel.isHidden = true
         
-        // Негайно зупинити камеру і валідацію
+        // Зафіксувати поточний кадр
+        freezeCurrentFrame()
+        
+        // Зупинити камеру і валідацію
         cameraService.stop()
         validationSource.stop()
         
-        // Тепер безпечно оновити UI
-        lastValidImage = image
-        messageLabel.isHidden = true
-        isFrameValid = true
-        overlayView.state = .success
-        
-        // Зображення вже зафіксовано раніше при появі зеленої рамки
-        
+        // Показати кнопки
         updateButtonState()
     }
     
@@ -391,6 +396,7 @@ final class DocumentPhotoCheckStreamViewController: UIViewController, BaseView {
     }
     
     private func handleFinalValidationFailure(message: String) {
+        // Фінальна валідація не пройшла - показати помилку
         isFrameValid = false
         messageLabel.text = localizedMessage(code: nil, fallback: message)
         messageLabel.isHidden = false
@@ -398,9 +404,7 @@ final class DocumentPhotoCheckStreamViewController: UIViewController, BaseView {
         isPhotoValidationPassed = false
         lastValidImage = nil
         
-        // Сховати зафіксоване зображення, показати live preview
-        hideFrozenFrame()
-        
+        // Камера продовжує працювати, користувач може спробувати знову
         updateButtonState()
     }
     
@@ -508,28 +512,13 @@ extension DocumentPhotoCheckStreamViewController: CameraCaptureServiceDelegate {
             case .success(let detection):
                 self.lastFrameSize = detection.originalImageSize
                 if detection.errors.isEmpty && detection.status.lowercased() == "success" {
-                    // Зелена рамка - зафіксувати все!
+                    // Зелена рамка - показати успіх і запустити фінальну валідацію
                     self.messageLabel.isHidden = true
                     self.isFrameValid = true
                     self.overlayView.state = .success
                     
-                    // СПОЧАТКУ зафіксувати знімок екрану (поки камера ще працює)
-                    self.freezeCurrentFrame()
-                    
-                    // Підготувати зображення для збереження
-                    if let payload = self.encodeForFinalValidation() {
-                        self.lastValidImage = payload.image
-                    }
-                    
-                    // Встановити прапорець успішної валідації (кнопка стане доступною)
-                    self.isPhotoValidationPassed = true
-                    
-                    // ТЕПЕР зупинити камеру і валідацію
-                    self.cameraService.stop()
-                    self.validationSource.stop()
-                    
-                    // Оновити стан кнопки
-                    self.updateButtonState()
+                    // Запустити фінальну валідацію на сервері (у фоні, камера продовжує працювати)
+                    self.startPhotoValidationIfPossible()
                     
                     if self.showLandmarks {
                         self.landmarksOverlay.isHidden = false
