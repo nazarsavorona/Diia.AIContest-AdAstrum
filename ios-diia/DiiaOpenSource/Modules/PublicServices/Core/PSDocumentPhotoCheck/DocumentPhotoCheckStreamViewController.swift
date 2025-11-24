@@ -310,7 +310,7 @@ final class DocumentPhotoCheckStreamViewController: UIViewController, BaseView {
         isFinalValidating = true
         isPhotoValidationPassed = false
         
-ь        // Показати повідомлення "Перевіряємо..." і зберегти зелену рамку
+        // Показати повідомлення "Перевіряємо..." і зберегти зелену рамку
         messageLabel.text = "Перевіряємо фото..."
         messageLabel.isHidden = false
         overlayView.state = .success
