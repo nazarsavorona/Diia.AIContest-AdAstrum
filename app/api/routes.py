@@ -15,6 +15,7 @@ from app.api.models import (
 )
 from app.core.pipeline import ValidationPipeline
 from app.core import settings
+from app.utils.crypto_utils import decrypt_image_payload
 from app import __version__
 import config
 
@@ -48,6 +49,30 @@ def get_stream_pipeline() -> ValidationPipeline:
         _stream_pipeline = ValidationPipeline(mode=config.MODE_STREAM)
         logger.info("Stream validation pipeline initialized")
     return _stream_pipeline
+
+
+def _extract_image_payload(request: ValidationRequest) -> str:
+    """
+    Resolve the image payload from the request.
+    Accepts either plain base64 (`image`) or encrypted payload (`encrypted_image`).
+    """
+    if request.encrypted_image is not None:
+        try:
+            return decrypt_image_payload(request.encrypted_image, request.encryption)
+        except ValueError as exc:
+            logger.error(f"Failed to decrypt image payload: {exc}")
+            raise HTTPException(
+                status_code=400,
+                detail=f"Invalid encrypted payload: {exc}"
+            )
+
+    if request.image is not None:
+        return request.image
+
+    raise HTTPException(
+        status_code=400,
+        detail="No image payload supplied"
+    )
 
 
 @router.get("/health", response_model=HealthResponse)
@@ -103,13 +128,14 @@ async def validate_photo(request: ValidationRequest):
     Use this for final photo validation before submission.
     """
     try:
+        image_payload = _extract_image_payload(request)
         # Select pipeline based on mode
         if request.mode == ValidationMode.FULL:
             pipeline = get_full_pipeline()
-            result = pipeline.validate(request.image, is_base64=True)
+            result = pipeline.validate(image_payload, is_base64=True)
         else:
             pipeline = get_stream_pipeline()
-            result = pipeline.validate_stream(request.image, is_base64=True)
+            result = pipeline.validate_stream(image_payload, is_base64=True)
         
         return ValidationResponse(
             status=result['status'],
@@ -144,7 +170,8 @@ async def validate_stream(request: ValidationRequest):
     """
     try:
         pipeline = get_stream_pipeline()
-        result = pipeline.validate_stream(request.image, is_base64=True)
+        image_payload = _extract_image_payload(request)
+        result = pipeline.validate_stream(image_payload, is_base64=True)
         
         return StreamValidationResponse(
             status=result['status'],

@@ -19,6 +19,7 @@ AWS_SESSION_TOKEN = os.getenv("AWS_SESSION_TOKEN")
 # Optional runtime flags
 MODEL_WARMUP = os.getenv("MODEL_WARMUP", "true").lower() == "true"
 TORCH_DEVICE = os.getenv("TORCH_DEVICE", "cuda")
+IMAGE_ENCRYPTION_KEY = os.getenv("IMAGE_ENCRYPTION_KEY", "diia-stream-shared-secret")
 
 __all__ = [
     "APP_NAME",
@@ -29,4 +30,5 @@ __all__ = [
     "AWS_SESSION_TOKEN",
     "MODEL_WARMUP",
     "TORCH_DEVICE",
+    "IMAGE_ENCRYPTION_KEY",
 ]

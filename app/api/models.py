@@ -2,7 +2,7 @@
 Pydantic models for API requests and responses
 """
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 from typing import List, Optional, Dict, Any
 from enum import Enum
 
@@ -15,11 +15,29 @@ class ValidationMode(str, Enum):
 
 class ValidationRequest(BaseModel):
     """Request model for photo validation"""
-    image: str = Field(..., description="Base64 encoded image data")
+    image: Optional[str] = Field(
+        default=None,
+        description="Base64 encoded image data (unencrypted)"
+    )
+    encrypted_image: Optional[str] = Field(
+        default=None,
+        description="AES-GCM encrypted base64 image payload (nonce+ciphertext+tag, base64 encoded)"
+    )
+    encryption: Optional[str] = Field(
+        default=None,
+        description="Encryption scheme for 'encrypted_image' (default: aes_gcm)"
+    )
     mode: ValidationMode = Field(
         default=ValidationMode.FULL,
         description="Validation mode: 'full' for complete validation or 'stream' for real-time"
     )
+
+    @model_validator(mode="after")
+    def _require_image_payload(self):
+        """Ensure at least one payload field is provided."""
+        if not self.image and not self.encrypted_image:
+            raise ValueError("Either 'image' or 'encrypted_image' must be provided")
+        return self
 
 
 class ErrorDetail(BaseModel):
