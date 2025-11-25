@@ -1,4 +1,5 @@
 import AVFoundation
+import CryptoKit
 import QuartzCore
 import UIKit
 
@@ -25,7 +26,8 @@ protocol FaceLandmarksSource {
 
 final class ApiForwardingLandmarksSource: FaceLandmarksSource {
     private struct StreamRequest: Encodable {
-        let image: String
+        let encrypted_image: String
+        let encryption: String = ImagePayloadEncryptor.algorithmName
         let mode: String = "stream"
     }
 
@@ -58,6 +60,7 @@ final class ApiForwardingLandmarksSource: FaceLandmarksSource {
     private let session: URLSession
     private let encoder = JSONEncoder()
     private let decoder = JSONDecoder()
+    private let encryptor = ImagePayloadEncryptor()
     private let processingQueue = DispatchQueue(label: "ua.gov.diia.landmarks.api", qos: .userInitiated)
     private let ciContext = CIContext()
     private let debugSaveFrames = false
@@ -89,6 +92,15 @@ final class ApiForwardingLandmarksSource: FaceLandmarksSource {
                 }
                 return
             }
+            let encryptedPayload: String
+            do {
+                encryptedPayload = try self.encryptor.encrypt(base64Payload: encodedFrame.base64)
+            } catch {
+                DispatchQueue.main.async {
+                    completion(.failure(error))
+                }
+                return
+            }
 
             self.inFlight = true
             self.lastRequestTime = now
@@ -97,7 +109,7 @@ final class ApiForwardingLandmarksSource: FaceLandmarksSource {
             request.setValue("application/json", forHTTPHeaderField: "Content-Type")
 
             do {
-                let body = StreamRequest(image: encodedFrame.base64)
+                let body = StreamRequest(encrypted_image: encryptedPayload)
                 request.httpBody = try self.encoder.encode(body)
             } catch {
                 self.markFinished()
