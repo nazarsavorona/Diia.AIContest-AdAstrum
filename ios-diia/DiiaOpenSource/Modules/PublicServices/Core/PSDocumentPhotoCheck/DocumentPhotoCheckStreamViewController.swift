@@ -1,5 +1,6 @@
 import UIKit
 import AVFoundation
+import CryptoKit
 import DiiaUIComponents
 import DiiaMVPModule
 
@@ -97,6 +98,7 @@ final class DocumentPhotoCheckStreamViewController: UIViewController, BaseView {
     private var lastOrientation: CGImagePropertyOrientation = .right
     private let finalValidationURL = URL(string: "https://d28w3hxcjjqa9z.cloudfront.net/api/v1/validate/photo")!
     private let ciContext = CIContext()
+    private let encryptor = ImagePayloadEncryptor()
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -316,8 +318,21 @@ final class DocumentPhotoCheckStreamViewController: UIViewController, BaseView {
         overlayView.state = .success
         
         updateButtonState()
+
+        let encryptedPayload: String
+        do {
+            encryptedPayload = try encryptor.encrypt(base64Payload: base64)
+        } catch {
+            isFinalValidating = false
+            handleFinalValidationFailure(message: "Не вдалося зашифрувати фото.")
+            return
+        }
         
-        let requestBody: [String: Any] = ["image": base64, "mode": "full"]
+        let requestBody: [String: Any] = [
+            "encrypted_image": encryptedPayload,
+            "encryption": ImagePayloadEncryptor.algorithmName,
+            "mode": "full"
+        ]
         var request = URLRequest(url: finalValidationURL)
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
