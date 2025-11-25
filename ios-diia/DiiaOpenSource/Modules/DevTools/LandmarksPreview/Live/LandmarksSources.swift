@@ -201,9 +201,25 @@ final class ApiForwardingLandmarksSource: FaceLandmarksSource {
 
         guard let cgImage = ciContext.createCGImage(mirrored, from: mirrored.extent.integral) else { return nil }
 
-        let imageSize = CGSize(width: cgImage.width, height: cgImage.height)
+        let originalSize = CGSize(width: cgImage.width, height: cgImage.height)
         let uiImage = UIImage(cgImage: cgImage, scale: 1, orientation: .up)
-        guard let jpegData = uiImage.jpegData(compressionQuality: 0.65) else { return nil }
+
+        // Downscale long edge to keep payload small; keep short edge above validator min (~600px).
+        let targetMaxSide: CGFloat = 960
+        let finalImage: UIImage
+        let finalSize: CGSize
+        if max(originalSize.width, originalSize.height) > targetMaxSide {
+            let scale = targetMaxSide / max(originalSize.width, originalSize.height)
+            let targetSize = CGSize(width: originalSize.width * scale, height: originalSize.height * scale)
+            finalImage = downscale(image: uiImage, to: targetSize)
+            finalSize = targetSize
+        } else {
+            finalImage = uiImage
+            finalSize = originalSize
+        }
+
+        // Slightly lower JPEG quality for smaller payloads.
+        guard let jpegData = finalImage.jpegData(compressionQuality: 0.5) else { return nil }
 
         if debugSaveFrames && debugSavedCount < debugSaveLimit {
             debugSavedCount += 1
@@ -211,7 +227,7 @@ final class ApiForwardingLandmarksSource: FaceLandmarksSource {
         }
 
         let base64 = jpegData.base64EncodedString()
-        return (base64, imageSize)
+        return (base64, finalSize)
     }
 
     private func markFinished() {
@@ -250,6 +266,16 @@ final class ApiForwardingLandmarksSource: FaceLandmarksSource {
         }
         let latencyText = detection.latencyMs.map { String(format: "%.0fms", $0) } ?? "n/a"
         print("Stream response -> status=\(detection.status.uppercased()) landmarks=\(detection.landmarks.count) \(bboxText) latency=\(latencyText) errors=\(errorSummary)")
+    }
+
+    private func downscale(image: UIImage, to targetSize: CGSize) -> UIImage {
+        let format = UIGraphicsImageRendererFormat()
+        format.scale = 1
+        format.opaque = true
+        let renderer = UIGraphicsImageRenderer(size: targetSize, format: format)
+        return renderer.image { _ in
+            image.draw(in: CGRect(origin: .zero, size: targetSize))
+        }
     }
 
     private func centerCrop(image: CIImage, targetAspectRatio: CGFloat) -> CIImage {
