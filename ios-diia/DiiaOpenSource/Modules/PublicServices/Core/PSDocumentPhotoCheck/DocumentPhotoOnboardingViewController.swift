@@ -24,6 +24,7 @@ final class DocumentPhotoOnboardingViewController: UIViewController, BaseView, U
     private let pageContainer = UIStackView()
     private let contextMenuProvider: ContextMenuProviderProtocol
     private let ciContext = CIContext()
+    private let encryptor = ImagePayloadEncryptor()
     private let frameScale: CGFloat = 1.0 / 1.5
     private let finalValidationURL = URL(string: "https://d28w3hxcjjqa9z.cloudfront.net/api/v1/validate/photo")!
     
@@ -265,10 +266,22 @@ extension DocumentPhotoOnboardingViewController {
             showSimpleAlert(message: "Не вдалося обробити фото. Спробуйте інше.")
             return
         }
+        let encryptedPayload: String
+        do {
+            encryptedPayload = try encryptor.encrypt(base64Payload: payload.base64)
+        } catch {
+            hideProgress()
+            showSimpleAlert(message: "Не вдалося зашифрувати фото.")
+            return
+        }
         var request = URLRequest(url: finalValidationURL)
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        request.httpBody = try? JSONSerialization.data(withJSONObject: ["image": payload.base64, "mode": "full"], options: [])
+        request.httpBody = try? JSONSerialization.data(withJSONObject: [
+            "encrypted_image": encryptedPayload,
+            "encryption": ImagePayloadEncryptor.algorithmName,
+            "mode": "full"
+        ], options: [])
         
         URLSession.shared.dataTask(with: request) { [weak self] data, response, error in
             DispatchQueue.main.async {

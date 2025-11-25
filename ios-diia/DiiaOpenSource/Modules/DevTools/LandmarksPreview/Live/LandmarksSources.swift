@@ -291,3 +291,28 @@ enum LandmarksSourceError: LocalizedError {
         }
     }
 }
+
+struct ImagePayloadEncryptor {
+    enum Error: Swift.Error {
+        case combinedDataUnavailable
+    }
+
+    static let algorithmName = "aes_gcm"
+    static let defaultSecret = "diia-stream-shared-secret"
+
+    private let key: SymmetricKey
+
+    init(secret: String = ImagePayloadEncryptor.defaultSecret) {
+        let hashed = SHA256.hash(data: Data(secret.utf8))
+        self.key = SymmetricKey(data: hashed)
+    }
+
+    func encrypt(base64Payload: String) throws -> String {
+        let data = Data(base64Payload.utf8)
+        let sealedBox = try AES.GCM.seal(data, using: key)
+        guard let combined = sealedBox.combined else {
+            throw Error.combinedDataUnavailable
+        }
+        return Data(combined).base64EncodedString()
+    }
+}
