@@ -10,6 +10,7 @@ ENV TORCH_DEVICE=cuda
 ENV CUDA_HOME=/usr/local/cuda
 ENV PATH="${CUDA_HOME}/bin:${PATH}"
 ENV TMPDIR=/var/tmp
+ENV FORCE_CUDA=1
 
 WORKDIR /app
 
@@ -38,6 +39,7 @@ COPY requirements.txt .
 
 # Install torch/vision (cu118), flash-attn (requires nvcc), then remaining deps
 RUN pip install --upgrade pip setuptools wheel packaging \
+ && pip install --no-cache-dir ninja cmake \
  && pip install --no-cache-dir torch==2.1.0 torchvision==0.16.0 --index-url https://download.pytorch.org/whl/cu118 \
  && pip install --no-cache-dir --no-build-isolation flash-attn==2.6.3 \
  && awk '!/^torch==/ && !/^torchvision==/ && !/^flash-attn==/' requirements.txt > requirements.nogpu.txt \
