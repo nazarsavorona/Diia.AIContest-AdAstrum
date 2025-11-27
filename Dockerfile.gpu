@@ -44,7 +44,6 @@ RUN pip install --upgrade pip setuptools wheel packaging \
  && pip install --no-cache-dir --no-build-isolation flash-attn==2.6.3 \
  && awk '!/^torch==/ && !/^torchvision==/ && !/^flash-attn==/' requirements.txt > requirements.nogpu.txt \
  && pip install --no-cache-dir -r requirements.nogpu.txt \
- && pip cache purge \
  && rm -rf /root/.cache /tmp/pip-build-env-* /tmp/pip-*
 
 # Copy application code
