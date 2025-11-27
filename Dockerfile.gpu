@@ -1,18 +1,22 @@
-# GPU-enabled Dockerfile for AWS ECS deployment (PyTorch base)
-FROM pytorch/pytorch:2.1.0-cuda11.8-cudnn8-runtime
+# GPU-enabled Dockerfile with CUDA toolkit for flash-attn (MiniCPM-o)
+FROM nvidia/cuda:11.8.0-cudnn8-devel-ubuntu22.04
 
-# Prevent interactive prompts and shrink pip cache usage
 ENV DEBIAN_FRONTEND=noninteractive
 ENV PIP_NO_CACHE_DIR=1
 ENV PYTHONUNBUFFERED=1
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV MODEL_WARMUP=true
 ENV TORCH_DEVICE=cuda
+ENV CUDA_HOME=/usr/local/cuda
+ENV PATH="${CUDA_HOME}/bin:${PATH}"
 
 WORKDIR /app
 
-# Install system/build dependencies needed for flash-attn and image ops
+# Install Python 3.10 and build/system deps
 RUN apt-get update && apt-get install -y --no-install-recommends \
+    python3.10 \
+    python3-pip \
+    python3.10-dev \
     build-essential \
     git \
     libgl1 \
@@ -23,13 +27,18 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libgomp1 \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy requirements first for better caching
+# Make python/pip defaults
+RUN update-alternatives --install /usr/bin/python python /usr/bin/python3.10 1 && \
+    update-alternatives --install /usr/bin/pip pip /usr/bin/pip3 1
+
+# Copy requirements early for caching
 COPY requirements.txt .
 
-# Install flash-attn against preinstalled torch, then the remaining deps (skip torch/vision/flash-attn from requirements)
+# Install PyTorch CUDA, flash-attn (requires nvcc), then remaining deps
 RUN pip install --upgrade pip setuptools wheel packaging \
+ && pip install --no-cache-dir torch==2.1.0 torchvision==0.16.0 --index-url https://download.pytorch.org/whl/cu118 \
  && pip install --no-cache-dir --no-build-isolation flash-attn==2.6.3 \
- && awk '!/^torch==/ && !/^torchvision==/ && !/^flash-attn==/' requirements.txt > requirements.nogpu.txt \
+ && awk '!/^torch==/ && !/^torchvision==/' requirements.txt > requirements.nogpu.txt \
  && pip install --no-cache-dir -r requirements.nogpu.txt \
  && pip cache purge \
  && rm -rf /root/.cache /tmp/pip-build-env-* /tmp/pip-*
@@ -39,7 +48,6 @@ COPY . .
 
 EXPOSE 8000
 
-# Enable CUDA optimizations
 ENV CUDA_VISIBLE_DEVICES=0
 
 CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "3"]
