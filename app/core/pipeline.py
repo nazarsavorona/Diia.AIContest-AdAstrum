@@ -3,8 +3,6 @@ Validation pipeline that orchestrates all validators
 """
 
 from typing import Dict, Any, List
-import numpy as np
-import io
 
 from app.validators.step1_format import FormatValidator
 from app.validators.step2_quality import QualityValidator
@@ -15,6 +13,7 @@ from app.validators.step6_background import BackgroundValidator
 from app.validators.step7_accessories import AccessoriesValidator
 from app.core.errors import ValidationResult
 from app.utils.image_utils import decode_base64_image, load_image_from_bytes
+from app.core import settings
 import config
 
 
@@ -57,19 +56,39 @@ class ValidationPipeline:
         # Step 6: Background analysis (only in full mode, heavy model)
         if self.mode == config.MODE_FULL:
             validators.append(('background', BackgroundValidator()))
-        
-        # Step 7: Accessories detection (optional, disabled by default)
-        # validators.append(('accessories', AccessoriesValidator(enabled=False)))
+            # Step 7: Accessories detection (MiniCPM-o, optional per request)
+            validators.append(('accessories', AccessoriesValidator(enabled=True)))
         
         return validators
+
+    def warmup(self):
+        """
+        Warm up heavy/optional models so first request latency stays low.
+        Currently only triggers the MiniCPM-o accessories validator.
+        """
+        for name, validator in self.validators:
+            if name != 'accessories':
+                continue
+            try:
+                if hasattr(validator, "warmup"):
+                    validator.warmup()
+                else:
+                    validator._ensure_model_loaded()  # type: ignore[attr-defined]
+            except Exception as e:
+                # Do not crash startup on optional validator failure
+                import logging
+                logging.getLogger(__name__).warning(
+                    "Warmup for %s failed: %s", name, e
+                )
     
-    def validate(self, image_data: Any, is_base64: bool = True) -> Dict[str, Any]:
+    def validate(self, image_data: Any, is_base64: bool = True, run_accessories: bool = True) -> Dict[str, Any]:
         """
         Run the complete validation pipeline
         
         Args:
             image_data: Image as base64 string or bytes
             is_base64: Whether image_data is base64 encoded
+            run_accessories: Whether to run the MiniCPM-o accessories check
             
         Returns:
             Dictionary with validation results
@@ -106,9 +125,19 @@ class ValidationPipeline:
         # Run validators sequentially
         all_errors = []
         all_metadata = {}
+        accessories_ran = False
         
         for name, validator in self.validators:
             try:
+                if name == 'accessories':
+                    if not run_accessories:
+                        all_metadata[name] = {
+                            'vlm_enabled': False,
+                            'message': 'Accessories check skipped by request'
+                        }
+                        continue
+                    accessories_ran = True
+
                 result = validator.validate(image, context)
                 
                 # Collect errors
@@ -136,6 +165,12 @@ class ValidationPipeline:
                     'error': str(e),
                     'validator_failed': True
                 }
+
+        if self.mode == config.MODE_FULL and run_accessories and not accessories_ran:
+            all_metadata['accessories'] = {
+                'vlm_enabled': False,
+                'message': 'Accessories check skipped because of earlier validation failure'
+            }
         
         # Determine overall status
         status = 'success' if len(all_errors) == 0 else 'fail'

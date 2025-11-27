@@ -37,6 +37,11 @@ def get_full_pipeline() -> ValidationPipeline:
     if _full_pipeline is None:
         logger.info("Initializing full validation pipeline...")
         _full_pipeline = ValidationPipeline(mode=config.MODE_FULL)
+        if settings.MODEL_WARMUP:
+            try:
+                _full_pipeline.warmup()
+            except Exception as exc:
+                logger.warning("Warmup failed: %s", exc)
         logger.info("Full validation pipeline initialized")
     return _full_pipeline
 
@@ -132,7 +137,11 @@ async def validate_photo(request: ValidationRequest):
         # Select pipeline based on mode
         if request.mode == ValidationMode.FULL:
             pipeline = get_full_pipeline()
-            result = pipeline.validate(image_payload, is_base64=True)
+            result = pipeline.validate(
+                image_payload,
+                is_base64=True,
+                run_accessories=request.check_accessories,
+            )
         else:
             pipeline = get_stream_pipeline()
             result = pipeline.validate_stream(image_payload, is_base64=True)

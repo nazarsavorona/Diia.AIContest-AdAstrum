@@ -19,6 +19,10 @@ class ValidationRequest(BaseModel):
         default=None,
         description="Base64 encoded image data (unencrypted)"
     )
+    check_accessories: bool = Field(
+        default=True,
+        description="Run MiniCPM-o accessories/filters check (full mode only)"
+    )
     encrypted_image: Optional[str] = Field(
         default=None,
         description="AES-GCM encrypted base64 image payload (nonce+ciphertext+tag, base64 encoded)"
