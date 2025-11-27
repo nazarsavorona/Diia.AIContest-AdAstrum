@@ -44,7 +44,6 @@ RUN pip install --upgrade pip setuptools wheel packaging \
  && pip install --no-cache-dir https://github.com/Dao-AILab/flash-attention/releases/download/v2.6.3/flash_attn-2.6.3+cu118torch2.1cxx11abiFALSE-cp310-cp310-linux_x86_64.whl \
  && awk '!/^torch==/ && !/^torchvision==/ && !/^torchaudio==/ && !/^flash-attn/' requirements.txt > requirements.nogpu.txt \
  && pip install --no-cache-dir -r requirements.nogpu.txt \
- && pip cache purge \
  && rm -rf /root/.cache /tmp/pip-build-env-* /tmp/pip-*
 
 # Copy application code
