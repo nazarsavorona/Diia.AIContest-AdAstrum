@@ -39,9 +39,11 @@ RUN update-alternatives --install /usr/bin/python python /usr/bin/python3.10 1 &
 COPY requirements.txt .
 
 # Install torch/vision (cu118), flash-attn, then remaining deps
+# Pin numpy<2 to avoid flash-attn build compatibility issues with NumPy 2.x
 RUN pip install --upgrade pip setuptools wheel packaging \
  && pip install --no-cache-dir ninja cmake psutil \
  && pip install --no-cache-dir torch==2.1.0 torchvision==0.16.0 torchaudio==2.1.0 --index-url https://download.pytorch.org/whl/cu118 \
+ && pip install --no-cache-dir "numpy<2" \
  && pip install --no-cache-dir flash-attn --no-build-isolation \
  && awk '!/^torch==/ && !/^torchvision==/ && !/^torchaudio==/ && !/^flash-attn/' requirements.txt > requirements.nogpu.txt \
  && pip install --no-cache-dir -r requirements.nogpu.txt \
