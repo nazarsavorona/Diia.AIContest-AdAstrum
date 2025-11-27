@@ -28,14 +28,7 @@ final class ApiForwardingLandmarksSource: FaceLandmarksSource {
     private struct StreamRequest: Encodable {
         let encrypted_image: String
         let encryption: String = ImagePayloadEncryptor.algorithmName
-        let mode: String = "stream"
-    }
-
-    private struct StreamResponse: Decodable {
-        let status: String
-        let errors: [ApiError]
-        let landmarks: [ApiLandmark]?
-        let guidance: ApiGuidance?
+        let mode: String = "full"
     }
 
     private struct ApiError: Decodable {
@@ -43,17 +36,9 @@ final class ApiForwardingLandmarksSource: FaceLandmarksSource {
         let message: String
     }
 
-    private struct ApiLandmark: Decodable {
-        let x: Double
-        let y: Double
-    }
-
-    private struct ApiGuidance: Decodable {
-        let faceBBox: [Double]?
-
-        enum CodingKeys: String, CodingKey {
-            case faceBBox = "face_bbox"
-        }
+    private struct PhotoResponse: Decodable {
+        let status: String
+        let errors: [ApiError]
     }
 
     private let endpoint: URL
@@ -75,7 +60,7 @@ final class ApiForwardingLandmarksSource: FaceLandmarksSource {
     init(baseURL: URL = URL(string: "https://d28w3hxcjjqa9z.cloudfront.net/api/v1")!,
          session: URLSession = .shared) {
         self.session = session
-        self.endpoint = baseURL.appendingPathComponent("validate/stream")
+        self.endpoint = baseURL.appendingPathComponent("validate/photo")
     }
 
     func process(sampleBuffer: CMSampleBuffer,
@@ -144,23 +129,19 @@ final class ApiForwardingLandmarksSource: FaceLandmarksSource {
                     return
                 }
                 do {
-                    let parsed = try self.decoder.decode(StreamResponse.self, from: data)
-                    let points = parsed.landmarks?.enumerated().map { idx, point in
-                        LandmarkPoint(index: idx,
-                                      position: CGPoint(x: point.x, y: point.y))
-                    } ?? []
+                    if let jsonString = String(data: data, encoding: .utf8) {
+                        print("Photo validation raw response:", jsonString)
+                    }
+                    let parsed = try self.decoder.decode(PhotoResponse.self, from: data)
                     let errors = parsed.errors.map { StreamValidationError(code: $0.code, message: $0.message) }
-                    let bboxRect = Self.rect(from: parsed.guidance?.faceBBox)
-                    let detection = LandmarksDetection(landmarks: points,
+                    let detection = LandmarksDetection(landmarks: [],
                                                        originalImageSize: encodedFrame.size,
                                                        status: parsed.status,
                                                        errors: errors,
-                                                       faceBoundingBox: bboxRect,
+                                                       faceBoundingBox: nil,
                                                        latencyMs: (CACurrentMediaTime() - startTime) * 1000.0)
                     self.logResponse(detection: detection)
-                    DispatchQueue.main.async {
-                        completion(.success(detection))
-                    }
+                    DispatchQueue.main.async { completion(.success(detection)) }
                 } catch {
                     print("Stream response decode failed: \(error.localizedDescription)")
                     DispatchQueue.main.async {
