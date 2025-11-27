@@ -27,8 +27,7 @@ python -m venv venv
 source venv/bin/activate  # On Windows: venv\Scripts\activate
 pip install -r requirements.txt
 # On Linux/CUDA hosts, ensure flash-attn builds successfully (required by MiniCPM-o 2.6).
-# In the GPU Dockerfile we install it with --no-build-isolation after torch is present.
-# If installing manually on a CUDA box:
+# In the GPU Dockerfile we use a CUDA devel base so nvcc is available and install:
 # pip install --no-build-isolation flash-attn==2.6.3
 ```
 
