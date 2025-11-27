@@ -181,7 +181,7 @@ jobs:
           echo "✓ Service updated with new task definition"
 
       - name: Wait for deployment to complete
-        timeout-minutes: 10
+        timeout-minutes: 30
         run: |
           echo "Waiting for ECS deployment to complete..."
           
