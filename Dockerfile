@@ -17,7 +17,8 @@ COPY requirements.txt .
 
 # Install Python dependencies
 RUN pip install --no-cache-dir --upgrade pip setuptools wheel packaging \
- && pip install --no-cache-dir -r requirements.txt
+ && awk '!/^flash-attn==/' requirements.txt > requirements.base.txt \
+ && pip install --no-cache-dir -r requirements.base.txt
 
 # Copy application code
 COPY . .
