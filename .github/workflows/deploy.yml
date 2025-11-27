@@ -24,6 +24,14 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Free up disk space for large CUDA base image
+        run: |
+          sudo rm -rf /usr/share/dotnet /opt/ghc /usr/local/lib/android /opt/hostedtoolcache
+          docker system prune -af || true
+
+      - name: Pre-pull CUDA PyTorch base to avoid timeouts
+        run: docker pull pytorch/pytorch:2.1.0-cuda11.8-cudnn8-devel
+
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
@@ -270,4 +278,3 @@ jobs:
           echo "⚠ API health check failed after 5 attempts, but ECS tasks are healthy"
           echo "  This may be a CloudFront caching issue"
           exit 0
-
