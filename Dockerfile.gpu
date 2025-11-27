@@ -30,11 +30,13 @@ WORKDIR /app
 # Copy requirements first for better caching
 COPY requirements.txt .
 
-# Install PyTorch with CUDA support, tooling, and flash-attn; then clean caches
+# Install PyTorch with CUDA support, tooling, and flash-attn; aggressively clean caches to save space
 RUN pip install --upgrade pip setuptools wheel packaging \
- && pip install torch==2.1.0 torchvision==0.16.0 --index-url https://download.pytorch.org/whl/cu118 \
- && pip install --no-build-isolation flash-attn==2.6.3 \
- && rm -rf /root/.cache /tmp/pip-build-env-*
+ && pip install --no-cache-dir torch==2.1.0 torchvision==0.16.0 --index-url https://download.pytorch.org/whl/cu118 \
+ && pip cache purge \
+ && pip install --no-cache-dir --no-build-isolation flash-attn==2.6.3 \
+ && pip cache purge \
+ && rm -rf /root/.cache /tmp/pip-build-env-* /tmp/pip-*
 
 # Install other Python dependencies (exclude torch and torchvision to keep CUDA builds)
 RUN awk '!/^torch==/ && !/^torchvision==/ && !/^flash-attn==/' requirements.txt > requirements.nogpu.txt \
