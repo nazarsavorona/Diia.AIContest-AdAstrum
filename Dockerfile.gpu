@@ -1,5 +1,5 @@
 # GPU-enabled Dockerfile for AWS ECS deployment
-FROM nvidia/cuda:11.8.0-cudnn8-runtime-ubuntu22.04
+FROM nvidia/cuda:11.8.0-cudnn8-devel-ubuntu22.04
 
 # Prevent interactive prompts during package installation
 ENV DEBIAN_FRONTEND=noninteractive
@@ -10,6 +10,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     python3-pip \
     python3.10-dev \
     curl \
+    build-essential \
+    git \
     libgl1 \
     libglib2.0-0 \
     libsm6 \
@@ -31,9 +33,11 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir torch==2.1.0 torchvision==0.16.0 --index-url https://download.pytorch.org/whl/cu118
 # Ensure build tooling for optional native deps (flash-attn)
 RUN pip install --no-cache-dir --upgrade pip setuptools wheel packaging
+# Install flash-attn with build isolation disabled so it can reuse the already-installed torch
+RUN pip install --no-cache-dir --no-build-isolation flash-attn==2.6.3
 
 # Install other Python dependencies (exclude torch and torchvision to keep CUDA builds)
-RUN awk '!/^torch==/ && !/^torchvision==/' requirements.txt > requirements.nogpu.txt \
+RUN awk '!/^torch==/ && !/^torchvision==/ && !/^flash-attn==/' requirements.txt > requirements.nogpu.txt \
  && pip install --no-cache-dir -r requirements.nogpu.txt
 
 # Copy application code

@@ -26,8 +26,10 @@ API for validating ID/passport photos for the Diia app. This service performs co
 python -m venv venv
 source venv/bin/activate  # On Windows: venv\Scripts\activate
 pip install -r requirements.txt
-# On Linux/CUDA hosts, ensure flash-attn builds successfully (required by MiniCPM-o 2.6)
-# pip install flash-attn==2.6.3
+# On Linux/CUDA hosts, ensure flash-attn builds successfully (required by MiniCPM-o 2.6).
+# In the GPU Dockerfile we install it with --no-build-isolation after torch is present.
+# If installing manually on a CUDA box:
+# pip install --no-build-isolation flash-attn==2.6.3
 ```
 
 2. **Run the server**:
