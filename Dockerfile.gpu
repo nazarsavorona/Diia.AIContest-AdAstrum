@@ -38,11 +38,11 @@ RUN update-alternatives --install /usr/bin/python python /usr/bin/python3.10 1 &
 # Copy requirements early for caching
 COPY requirements.txt .
 
-# Install torch/vision (cu118), flash-attn (from pre-built wheel), then remaining deps
+# Install torch/vision (cu118), flash-attn, then remaining deps
 RUN pip install --upgrade pip setuptools wheel packaging \
  && pip install --no-cache-dir ninja cmake psutil \
  && pip install --no-cache-dir torch==2.1.0 torchvision==0.16.0 torchaudio==2.1.0 --index-url https://download.pytorch.org/whl/cu118 \
- && pip install --no-cache-dir https://github.com/Dao-AILab/flash-attention/releases/download/v2.6.3/flash_attn-2.6.3+cu118torch2.1cxx11abiFALSE-cp310-cp310-linux_x86_64.whl \
+ && pip install --no-cache-dir flash-attn --no-build-isolation \
  && awk '!/^torch==/ && !/^torchvision==/ && !/^torchaudio==/ && !/^flash-attn/' requirements.txt > requirements.nogpu.txt \
  && pip install --no-cache-dir -r requirements.nogpu.txt \
  && rm -rf /root/.cache /tmp/pip-build-env-* /tmp/pip-*
