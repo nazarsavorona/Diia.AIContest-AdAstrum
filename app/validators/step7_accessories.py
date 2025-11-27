@@ -142,6 +142,7 @@ class AccessoriesValidator(BaseValidator):
                 "face_crop_bbox": face_bbox,
                 "inference_device": self._inference_device,
                 "revision": self.revision,
+                "attn_implementation": getattr(self, "_attn_impl", None),
             }
         )
 
@@ -163,6 +164,7 @@ class AccessoriesValidator(BaseValidator):
             dtype = torch.float16 if target_device in {"cuda", "mps"} else torch.float32
             self._inference_device = target_device
 
+            attn_impl = "sdpa"
             try:
                 self._tokenizer = AutoTokenizer.from_pretrained(
                     self.model_id,
@@ -174,14 +176,31 @@ class AccessoriesValidator(BaseValidator):
                     trust_remote_code=True,
                     revision=self.revision,
                     torch_dtype=dtype,
-                    attn_implementation="sdpa",
+                    attn_implementation=attn_impl,
                 ).eval()
+            except Exception as exc:
+                logger.warning(
+                    "MiniCPM-o load with attn=%s failed (%s); retrying with eager",
+                    attn_impl,
+                    exc,
+                )
+                attn_impl = "eager"
+                try:
+                    self._model = AutoModel.from_pretrained(
+                        self.model_id,
+                        trust_remote_code=True,
+                        revision=self.revision,
+                        torch_dtype=dtype,
+                        attn_implementation=attn_impl,
+                    ).eval()
+                except Exception:
+                    self._load_failed = True
+                    raise
 
-                if target_device != "cpu":
-                    self._model = self._model.to(target_device)
-            except Exception:
-                self._load_failed = True
-                raise
+            if target_device != "cpu":
+                self._model = self._model.to(target_device)
+            # Remember which attention backend we ended up using
+            self._attn_impl = attn_impl
 
     def _prepare_image(self, image: np.ndarray, face_bbox: Optional[List[int]]) -> Image.Image:
         """
