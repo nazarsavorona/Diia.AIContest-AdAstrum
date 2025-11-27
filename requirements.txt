@@ -19,3 +19,4 @@ timm==0.9.10
 accelerate==1.2.1
 torchaudio==2.1.0
 flash-attn==2.6.3; platform_system == "Linux"
+packaging>=24.0

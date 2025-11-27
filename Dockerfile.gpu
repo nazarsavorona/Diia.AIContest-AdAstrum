@@ -29,6 +29,8 @@ COPY requirements.txt .
 
 # Install PyTorch with CUDA support
 RUN pip install --no-cache-dir torch==2.1.0 torchvision==0.16.0 --index-url https://download.pytorch.org/whl/cu118
+# Ensure build tooling for optional native deps (flash-attn)
+RUN pip install --no-cache-dir --upgrade pip setuptools wheel packaging
 
 # Install other Python dependencies (exclude torch and torchvision to keep CUDA builds)
 RUN awk '!/^torch==/ && !/^torchvision==/' requirements.txt > requirements.nogpu.txt \
