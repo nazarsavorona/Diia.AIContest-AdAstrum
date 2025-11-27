@@ -29,9 +29,6 @@ jobs:
           sudo rm -rf /usr/share/dotnet /opt/ghc /usr/local/lib/android /opt/hostedtoolcache
           docker system prune -af || true
 
-      - name: Pre-pull CUDA PyTorch base to avoid timeouts
-        run: docker pull pytorch/pytorch:2.1.0-cuda11.8-cudnn8-devel
-
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
