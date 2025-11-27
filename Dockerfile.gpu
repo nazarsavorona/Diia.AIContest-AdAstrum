@@ -43,5 +43,7 @@ ENV PYTHONUNBUFFERED=1
 ENV PYTHONDONTWRITEBYTECODE=1
 # Enable CUDA optimizations
 ENV CUDA_VISIBLE_DEVICES=0
+ENV MODEL_WARMUP=true
+ENV TORCH_DEVICE=cuda
 
 CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "3"]

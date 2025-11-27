@@ -26,6 +26,8 @@ API for validating ID/passport photos for the Diia app. This service performs co
 python -m venv venv
 source venv/bin/activate  # On Windows: venv\Scripts\activate
 pip install -r requirements.txt
+# On Linux/CUDA hosts, ensure flash-attn builds successfully (required by MiniCPM-o 2.6)
+# pip install flash-attn==2.6.3
 ```
 
 2. **Run the server**:
@@ -85,11 +87,17 @@ Content-Type: application/json
 
 {
   "image": "base64_encoded_image_data",
-  "mode": "full"
+  "mode": "full",
+  "check_accessories": true
 }
 ```
 
-Runs complete validation pipeline including background segmentation.
+Runs complete validation pipeline including background segmentation. Set
+`check_accessories` to `false` to skip the MiniCPM-o accessories/filters pass when
+latency is critical. You can set `TORCH_DEVICE=cuda` (GPU), `TORCH_DEVICE=mps`
+(Apple Silicon), or leave unset to let the service auto-pick CUDA/MPS/CPU.
+The MiniCPM-o code is pinned via `MINICPM_REVISION` to avoid unexpected remote code
+changes; override only if you explicitly want a newer revision.
 
 **Response**:
 ```json
@@ -107,7 +115,8 @@ Runs complete validation pipeline including background segmentation.
     "face": {...},
     "pose": {...},
     "geometry": {...},
-    "background": {...}
+    "background": {...},
+    "accessories": {...}
   }
 }
 ```
