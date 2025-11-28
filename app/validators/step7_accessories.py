@@ -165,6 +165,15 @@ class AccessoriesValidator(BaseValidator):
             self._inference_device = target_device
 
             attn_impl = "sdpa"
+            load_kwargs = {
+                "trust_remote_code": True,
+                "revision": self.revision,
+                "torch_dtype": dtype,
+                "attn_implementation": attn_impl,
+                "low_cpu_mem_usage": True,
+            }
+            if target_device != "cpu":
+                load_kwargs["device_map"] = {"": target_device}
             try:
                 self._tokenizer = AutoTokenizer.from_pretrained(
                     self.model_id,
@@ -173,10 +182,7 @@ class AccessoriesValidator(BaseValidator):
                 )
                 self._model = AutoModel.from_pretrained(
                     self.model_id,
-                    trust_remote_code=True,
-                    revision=self.revision,
-                    torch_dtype=dtype,
-                    attn_implementation=attn_impl,
+                    **load_kwargs,
                 ).eval()
             except Exception as exc:
                 logger.warning(
@@ -185,13 +191,11 @@ class AccessoriesValidator(BaseValidator):
                     exc,
                 )
                 attn_impl = "eager"
+                load_kwargs["attn_implementation"] = attn_impl
                 try:
                     self._model = AutoModel.from_pretrained(
                         self.model_id,
-                        trust_remote_code=True,
-                        revision=self.revision,
-                        torch_dtype=dtype,
-                        attn_implementation=attn_impl,
+                        **load_kwargs,
                     ).eval()
                 except Exception:
                     self._load_failed = True
