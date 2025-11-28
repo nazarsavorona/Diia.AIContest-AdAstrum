@@ -22,6 +22,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     python3.10-dev \
     build-essential \
     git \
+    curl \
     libgl1 \
     libglib2.0-0 \
     libsm6 \
@@ -37,7 +38,9 @@ RUN update-alternatives --install /usr/bin/python python /usr/bin/python3.10 1 &
 # Copy requirements early for caching
 COPY requirements.txt .
 
-# Install torch/vision (cu118), flash-attn (requires nvcc), then remaining deps
+# Install torch/vision (cu118), flash-attn (prebuilt wheel), then remaining deps
+# Pin numpy<2 for PyTorch 2.1 compatibility
+# Use prebuilt flash-attn wheel for torch 2.1 + cu118 to avoid compilation issues
 RUN pip install --upgrade pip setuptools wheel packaging \
  && pip install --no-cache-dir ninja cmake psutil \
  && pip install --no-cache-dir torch==2.1.2 torchvision==0.16.2 torchaudio==2.1.2 --index-url https://download.pytorch.org/whl/cu118 \

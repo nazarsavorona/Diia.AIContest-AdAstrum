@@ -29,9 +29,6 @@ jobs:
           sudo rm -rf /usr/share/dotnet /opt/ghc /usr/local/lib/android /opt/hostedtoolcache
           docker system prune -af || true
 
-      - name: Pre-pull CUDA PyTorch base to avoid timeouts
-        run: docker pull pytorch/pytorch:2.1.0-cuda11.8-cudnn8-devel
-
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
@@ -64,6 +61,67 @@ jobs:
           
           echo "✓ Image built and pushed with layer caching"
           echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_OUTPUT
+
+      - name: Ensure ECS infrastructure is healthy
+        run: |
+          echo "Checking ECS cluster health..."
+          
+          # Get container instances
+          CONTAINER_INSTANCES=$(aws ecs list-container-instances \
+            --cluster ${{ env.STACK_NAME }}-cluster \
+            --query 'containerInstanceArns' \
+            --output json)
+          
+          if [ "$CONTAINER_INSTANCES" = "[]" ]; then
+            echo "⚠ No container instances found - ASG may be scaling up"
+            exit 0
+          fi
+          
+          # Check if ECS agent is connected
+          INSTANCE_ARN=$(echo "$CONTAINER_INSTANCES" | jq -r '.[0]')
+          AGENT_STATUS=$(aws ecs describe-container-instances \
+            --cluster ${{ env.STACK_NAME }}-cluster \
+            --container-instances "$INSTANCE_ARN" \
+            --query 'containerInstances[0].agentConnected' \
+            --output text)
+          
+          echo "ECS Agent connected: $AGENT_STATUS"
+          
+          if [ "$AGENT_STATUS" != "True" ]; then
+            echo "⚠ ECS agent is disconnected - rebooting instance..."
+            
+            # Get the EC2 instance ID
+            EC2_INSTANCE=$(aws ecs describe-container-instances \
+              --cluster ${{ env.STACK_NAME }}-cluster \
+              --container-instances "$INSTANCE_ARN" \
+              --query 'containerInstances[0].ec2InstanceId' \
+              --output text)
+            
+            echo "Rebooting EC2 instance: $EC2_INSTANCE"
+            aws ec2 reboot-instances --instance-ids "$EC2_INSTANCE"
+            
+            # Wait for agent to reconnect (up to 3 minutes)
+            echo "Waiting for ECS agent to reconnect..."
+            for i in {1..18}; do
+              sleep 10
+              NEW_STATUS=$(aws ecs describe-container-instances \
+                --cluster ${{ env.STACK_NAME }}-cluster \
+                --container-instances "$INSTANCE_ARN" \
+                --query 'containerInstances[0].agentConnected' \
+                --output text 2>/dev/null || echo "False")
+              
+              if [ "$NEW_STATUS" = "True" ]; then
+                echo "✓ ECS agent reconnected after reboot"
+                exit 0
+              fi
+              echo "  Waiting... ($i/18)"
+            done
+            
+            echo "✗ ECS agent did not reconnect after reboot"
+            exit 1
+          fi
+          
+          echo "✓ ECS infrastructure is healthy"
 
       - name: Get ECS GPU AMI ID
         id: get-ami
